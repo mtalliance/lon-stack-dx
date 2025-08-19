@@ -290,6 +290,7 @@ static void EventNormalConnected(void *data)
 }
 
 
+#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
  * Function: EventNormalUserDisconnect
  *
@@ -302,7 +303,6 @@ static void EventNormalUserDisconnect(void *data)
     is_connected = 0;
     CAL_Printf("Disconnected\r\n");
 }
-
 
 /*
  * Function: EventNormalLinkLost
@@ -327,8 +327,6 @@ static void EventNormalDHCPRenew(void *data)
     CAL_Printf("DHCP renew\r\n");
 }
 
-
-#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
  * Function: EventNormalResetProv
  *

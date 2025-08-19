@@ -80,8 +80,8 @@ mdev_t *flashFd = NULL; // File descriptor for the flash device
  *   IzotApiNoError (0) on success, or an <IzotApiError> error code
  *   on failure.
  */
-IzotApiError HalCreateConfigDirectory(const char *path, mode_t mode) {
 #if OS_IS(LINUX)
+IzotApiError HalCreateConfigDirectory(const char *path, mode_t mode) {
     char tmp[512];
     struct stat st;
     size_t len;
@@ -138,11 +138,10 @@ IzotApiError HalCreateConfigDirectory(const char *path, mode_t mode) {
         return persistentMemError = IzotApiPersistentDirError;
     }
     return persistentMemError;
-#else
     // Not implemented for this platform
     return persistentMemError = IzotApiPersistentDirError;
-#endif // OS_IS(LINUX)
 }
+#endif // OS_IS(LINUX)
 
 /*
  * Initializes the hardware-specific driver for interfacing with
@@ -221,7 +220,7 @@ IzotApiError HalGetFlashInfo(size_t *offset, size_t *region_size,
     *number_of_blocks   = 0;
     *block_size         = 0;
     *number_of_regions  = 0;
-    persistentMemError  = IzotApiPersistentFailure
+    persistentMemError  = IzotApiPersistentFailure;
 #endif
 
     return persistentMemError;
@@ -517,9 +516,9 @@ IzotApiError HalGetMacAddress(unsigned char *mac)
 
     return IzotApiNoError; // Success
 #elif PROCESSOR_IS(MC200)
-    return (wlan_get_mac_address(mac) ? IzotMacIdNotAvailable : IzotApiNoError);
+    return (wlan_get_mac_address(mac) ? IzotApiMacIdNotAvailable : IzotApiNoError);
 #else
-    return IzotMacIdNotAvailable;
+    return IzotApiMacIdNotAvailable;
 #endif
 }
 

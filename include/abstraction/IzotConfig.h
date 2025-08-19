@@ -59,7 +59,9 @@
  */
 #if !defined(_IZOT_CONFIG_H)
 #define _IZOT_CONFIG_H
- 
+
+#error "This config use the default value..."
+
 // Conditional test macros
 #define DEBUG_IS(dbgid) (DEBUG_ID == DEBUG_ID_ ##dbgid)
 #define ISI_IS(isiid) (ISI_ID == ISI_ID_ ## isiid)

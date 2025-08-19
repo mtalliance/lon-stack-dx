@@ -77,9 +77,11 @@
 
 // Use default platform ID if not defined
 #if !defined(PLATFORM_ID)
-#define PLATFORM_ID PLATFORM_ID_LINUX64_ARM_GCC
+    #define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
+#elif PLATFORM_ID==PLATFORM_ID_FRTOS_ARM_EABI
+    // #error PLATFORM_ID is PLATFORM_ID_FRTOS_ARM_EABI
 #endif  // !defined(PLATFORM_ID)
-
+ 
 #if PLATFORM_IS(RPI) || PLATFORM_IS(RPI_PICO)
     /*
      * Raspberry Pi platform using the 32-bit arm-linux-gnueabihf toolchain.  Little-endian.

@@ -1050,7 +1050,7 @@ void MsgCompletes(Status status, MsgTag tag)
     }
 }
 
-void DoApp(Bool isOnline) 
+void DoApp(IzotBool isOnline) 
 {
     MsgIn* msg_in = NULL;
     RespIn* rsp_in = NULL;
