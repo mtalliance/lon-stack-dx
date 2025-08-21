@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  * See LICENSE file for details.
  * 
- * Title:   Lon Stack DX Platform Definitions
+ * Title:   LON Stack DX Platform Definitions
  * Purpose: Defines platform-specific macros and data types.
  * Notes:   Platform preferences are grouped together by a preprocessor
  *          macro that indicates the compiler and target platform.  In
@@ -13,7 +13,7 @@
  *          compiler macros.
  * 
  *          If this file does not include definitions that are appropriate
- *          for your target platform, host, and development environment, y
+ *          for your target platform, host, and development environment,
  *          you can derive your set of platform properties by copying one of
  *          the definition sets and modifying them as needed.
  * 
@@ -73,11 +73,9 @@
 #ifndef _IZOT_PLATFORM_H
 #define _IZOT_PLATFORM_H
 
-#ifndef _IZOT_CONFIG_H
-#   error You must include IzotConfig.h first 
-#endif  /* _IZOT_CONFIG_H */
-
 #include <stddef.h>
+
+#include "abstraction/IzotConfig.h" // Project-specific configuration
 
 // Number of stacks on this platform
 #define NUM_STACKS 1
@@ -86,14 +84,46 @@
  * Section: Default IDs
  *****************************************************************/
 // To change any of these for a project, implement a #define for
-// your ID after including IzotConfig.h and prior to including
-// IzotPlatform.h.  See IzotConfig.h for more information.
-#if !defined(PLATFORM_ID)
-    #define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
-#elif PLATFORM_ID==PLATFORM_ID_FRTOS_ARM_EABI
-    // #error PLATFORM_ID is PLATFORM_ID_FRTOS_ARM_EABI
-#endif  // !defined(PLATFORM_ID)
- 
+// your ID in IzotConfig.h.  See IzotConfig.h for more information.
+#if !defined(DEBUG_ID)
+#define DEBUG_ID      DEBUG_ID_NONE
+#endif  // !defined(DEBUG_ID)
+
+#if !defined(ISI_ID)
+#define ISI_ID 		  ISI_ID_NO_ISI
+#endif  // !defined(ISI_ID)
+
+#if !defined(IUP_ID)
+#define IUP_ID        IUP_ID_NO_IUP
+#endif  // !defined(IUP_ID)
+
+#if !defined(LINK_ID)
+#define LINK_ID       LINK_ID_ETHERNET
+#endif  // !defined(LINK_ID)
+
+#if !defined(OS_ID)
+#define OS_ID         OS_ID_LINUX
+#endif  // !defined(OS_ID)
+
+#if !defined(PROCESSOR_ID)
+#define PROCESSOR_ID  PROCESSOR_ID_ARM64
+#endif  // !defined(PROCESSOR_ID)
+
+#if !defined(PRODUCT_ID)
+#define PRODUCT_ID 	  PRODUCT_ID_NA
+#endif  // !defined(PRODUCT_ID)
+
+#if !defined(PROTOCOL_ID)
+#define PROTOCOL_ID   PROTOCOL_ID_LON_IP
+#endif  // !defined(PROTOCOL_ID)
+
+#if !defined(SECURITY_ID)
+#define SECURITY_ID   SECURITY_ID_V1
+#endif  // !defined(SECURITY_ID)
+
+/*****************************************************************
+ * Section: Platform Definitions
+ *****************************************************************/
 #if PLATFORM_IS(RPI) || PLATFORM_IS(RPI_PICO)
     /*
      * Raspberry Pi platform using the 32-bit arm-linux-gnueabihf toolchain.  Little-endian.
@@ -493,14 +523,13 @@
      * 64-bit standard ARM Linux platform using the standard GCC tool 
      * chain.  Little-endian.
      */
-
     #if !defined(_IZOT_PLATFORM_DEFINED)
         #define _IZOT_PLATFORM_DEFINED
     #else
         #error Multiple platform definitions including LINUX64_ARM_GCC
     #endif
     // #pragma message("Linux 64-bit ARM platform (LINUX64_ARM_GCC) selected")
-    #define LINUX64_HOSTED       /* runs on a Linux64 system */
+    #define LINUX64_HOSTED       // runs on a Linux64 system
 
     // Specify processor type.
     #undef PROCESSOR_ID
