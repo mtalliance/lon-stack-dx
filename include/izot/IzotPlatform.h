@@ -75,8 +75,6 @@
 
 #include <stddef.h>
 
-#include "abstraction/IzotConfig.h" // Project-specific configuration
-
 // Number of stacks on this platform
 #define NUM_STACKS 1
 
@@ -248,12 +246,13 @@
     #ifndef FALSE
         #define FALSE  0
     #endif
+    #error "I'm NOT here ======== Check if RPI is ENABLED ============================================================  "
 
 #endif // defined(RPI)
 
-
 #if !defined(PLATFORM_ID) && defined(ARM_NONE_EABI_GCC)
     #define PLATFORM_ID PLATFORM_ID_ARM_EABI_GCC
+    #error "I'm NOT here ======== Check if ARM_NONE_EABI_GCC is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(ARM_EABI_GCC)
@@ -380,6 +379,8 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if ARM_NONE_EABI_GCC is ENABLED ============================================================  "
+
 #endif // defined(ARM_NONE_EABI_GCC)
 
 #if PLATFORM_IS(FRTOS_ARM_EABI)
@@ -403,7 +404,7 @@
     // Specify operating system.
     #undef OS_ID
     #define OS_ID OS_ID_FREERTOS
-
+    
     // Specify little-endian byte order.
     #undef BYTE_ORDER
     #define BYTE_ORDER LITTLE_ENDIAN
@@ -640,10 +641,14 @@
     #ifndef FALSE
         #define FALSE  0
     #endif
+
+    #error "I'm NOT here ======== Check if LINUX64_ARM_GCC is ENABLED ============================================================  "
+
 #endif // defined(LINUX64_ARM_GCC)
 
 #if !defined(PLATFORM_ID) && defined(LINUX32_GCC)
     #define PLATFORM_ID PLATFORM_ID_LINUX32_ARM_GCC
+    #error "I'm NOT here ======== Check if LINUX32_ARM_GCC is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(LINUX32_ARM_GCC)
@@ -729,11 +734,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if LINUX32_ARM_GCC is ENABLED ============================================================  "
+
 #endif // defined(LINUX32_ARM_GCC)
 
 
 #if !defined(PLATFORM_ID) && defined(WIN32)
     #define PLATFORM_ID PLATFORM_ID_WIN32_X86
+    #error "I'm NOT here ======== Check if WIN32_X86 is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(WIN32_X86)
@@ -818,11 +826,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if WIN32_X86 is ENABLED ============================================================  "
+
 #endif // defined(WIN32_X86)
 
 
 #if !defined(PLATFORM_ID) && defined(ARM7_IAR)
     #define PLATFORM_ID PLATFORM_ID_IAR_ARM7
+    #error "I'm NOT here ======== Check if IAR_ARM7 is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(IAR_ARM7)
@@ -914,11 +925,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if IAR_ARM7 is ENABLED ============================================================  "
+
 #endif // defined(IAR_ARM7)
 
 
 #if !defined(PLATFORM_ID) && defined(AVR_TINY13)
     #define PLATFORM_ID PLATFORM_ID_AVR_TINY13
+    #error "I'm NOT here ======== Check if AVR_TINY13 is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(AVR_TINY13)
@@ -1006,11 +1020,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if AVR_TINY13 is ENABLED ============================================================  "
+
 #endif // defined(AVR_TINY13)
 
 
 #if !defined(PLATFORM_ID) && defined(_HITECH)
     #define PLATFORM_ID PLATFORM_ID_HITECH
+    #error "I'm NOT here ======== Check if HITECH is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(HITECH)
@@ -1098,11 +1115,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if HITECH is ENABLED ============================================================  "
+
 #endif // defined(HITECH)
 
 
 #if !defined(PLATFORM_ID) && defined(_COSMIC)
     #define PLATFORM_ID PLATFORM_ID_COSMIC
+    #error "I'm NOT here ======== Check if COSMIC is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(COSMIC)
@@ -1214,11 +1234,14 @@
         #define FALSE  0
     #endif
 
+    #error "I'm NOT here ======== Check if COSMIC is ENABLED ============================================================  "
+
 #endif // defined(COSMIC)
 
 
 #if !defined(PLATFORM_ID) && defined(GCC_NIOS)
     #define PLATFORM_ID PLATFORM_ID_NIOS2_LE
+    #error "I'm NOT here ======== Check if NIOS2_LE is ENABLED ============================================================  "
 #endif
 
 #if PLATFORM_IS(NIOS2_LE)
@@ -1299,6 +1322,9 @@
     #ifndef FALSE
         #define FALSE  0
     #endif
+
+    #error "I'm NOT here ======== Check if NIOS2_LE is ENABLED ============================================================  "
+
 #endif // defined(NIOS2_LE)
 
 #if !defined(PLATFORM_ID) 

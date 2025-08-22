@@ -55,8 +55,7 @@
 typedef IZOT_ENUM_BEGIN(IsiApiError) 
 {
     /*    0    */    IsiApiNoError = 0,           // no error.
-    /*    500  */    IsiNoConnectionSpace = 500,  // No connection space or no more unused serial
-    /*    501  */    IsiEngineNotRunning = 501 
+                     IsiApi_ERROR
 } IZOT_ENUM_END(IsiApiError);
 
 

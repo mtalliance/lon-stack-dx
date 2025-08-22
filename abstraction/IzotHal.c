@@ -20,12 +20,14 @@ extern "C" {
 #endif
 
 #include "abstraction/IzotConfig.h" // Project-specific configuration
+#include "izot/IzotPlatform.h"
  
+#include <sys/types.h>
+
 #if OS_IS(LINUX)
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -80,8 +82,8 @@ mdev_t *flashFd = NULL; // File descriptor for the flash device
  *   IzotApiNoError (0) on success, or an <IzotApiError> error code
  *   on failure.
  */
-#if OS_IS(LINUX)
 IzotApiError HalCreateConfigDirectory(const char *path, mode_t mode) {
+#if OS_IS(LINUX)
     char tmp[512];
     struct stat st;
     size_t len;
@@ -138,10 +140,11 @@ IzotApiError HalCreateConfigDirectory(const char *path, mode_t mode) {
         return persistentMemError = IzotApiPersistentDirError;
     }
     return persistentMemError;
+#else
     // Not implemented for this platform
     return persistentMemError = IzotApiPersistentDirError;
-}
 #endif // OS_IS(LINUX)
+}
 
 /*
  * Initializes the hardware-specific driver for interfacing with

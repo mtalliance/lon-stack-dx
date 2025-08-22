@@ -157,8 +157,30 @@
  * Section: LON Stack Configuration Overrides
  *****************************************************************/
 // Add any overrides to the default settings in this section.
-#define PLATFORM_ID PLATFORM_ID_LINUX64_ARM_GCC
-#define LINK_ID LINK_ID_USB
+#define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
+#define LINK_ID     LINK_ID_USB
 #define PROTOCOL_ID PROTOCOL_ID_LON_NATIVE
+#define ISI_ID      ISI_ID_NO_ISI
+#define IUP_ID      IUP_ID_NO_IUP
+#define PRODUCT_ID 	  PRODUCT_ID_NA
+#define SECURITY_ID   SECURITY_ID_V1
 
 #endif  // defined(_IZOT_CONFIG_H) 
+
+// Defined i IzotConfig
+    // #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
+    // #define ISI_IS(isiid) (ISI_ID == ISI_ID_ ## isiid)
+    // #define IUP_IS(iupid) (IUP_ID == IUP_ID_ ## iupid)
+    // #define LINK_IS(linkid) (LINK_ID == LINK_ID_ ## linkid)
+    // #define PRODUCT_IS(prodid) (PRODUCT_ID == PRODUCT_ID_ ## prodid)
+    // #define PROTOCOL_IS(protid) (PROTOCOL_ID == PROTOCOL_ID_ ## protid)
+    // #define SECURITY_IS(secid) (SECURITY_ID == SECURITY_ID_ ## secid)
+
+// Defined in Platform
+    // #define OS_IS(osid) (OS_ID == OS_ID_ ## osid)
+    // #define PROCESSOR_IS(procid) (PROCESSOR_ID == PROCESSOR_ID_ ## procid)
+
+// Not defined
+    // #define DEBUG_IS(dbgid) (DEBUG_ID == DEBUG_ID_ ##dbgid)
+
+

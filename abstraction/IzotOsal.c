@@ -65,7 +65,7 @@ OsalTickCount IzotGetTickCount(void)
 
     msecNow = millis();
     return msecNow;
-#else
+#else 
     struct timespec timeNow;
 
     clock_gettime(CLOCK_REALTIME, &timeNow);

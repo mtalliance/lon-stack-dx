@@ -105,7 +105,7 @@ IsiApiError update_domain_address(const IzotDomain* pDomain, int index, int nonC
 	    IZOT_SET_ATTRIBUTE_P(temp,IZOT_DOMAIN_NODE, IZOT_GET_ATTRIBUTE_P(pDomain,IZOT_DOMAIN_NODE));
 	    temp->InvalidIdLength = pDomain->InvalidIdLength;
         IZOT_SET_ATTRIBUTE_P(temp,IZOT_DOMAIN_INVALID, 0);    // set the domain to be valid.  Otherwise, the LTS will reset the length to 7
-        sts = IzotUpdateDomainConfig(index, temp);
+        sts = (IsiApiError)IzotUpdateDomainConfig(index, temp);
         _IsiAPIDebug("DomainID  = %x %x %x %x %x %x, Subnet=%d, NonClone=%d Node=%d Invalid=%d Length=%d Key=%x\n", 
                 temp->Id[0],temp->Id[1],temp->Id[2],temp->Id[3],temp->Id[4],temp->Id[5],temp->Subnet, 
                 IZOT_GET_ATTRIBUTE_P(temp,IZOT_DOMAIN_NONCLONE),
@@ -279,7 +279,7 @@ IzotAddress*	access_address(int index)
  ***************************************************************************/
 IsiApiError update_address(const IzotAddress* address, int index)
 {
-    IsiApiError sts = IzotUpdateAddressConfig(index, address);
+    IsiApiError sts = (IsiApiError)IzotUpdateAddressConfig(index, address);
 	if (sts != IsiApiNoError) {
 		_IsiAPIDebug("update_address failed (entry %d)\n", index);
 	}
@@ -327,14 +327,14 @@ const IzotAliasConfig* IsiGetAlias(unsigned Index)
  ***************************************************************************/
 IsiApiError IsiSetAlias(IzotAliasConfig* pAlias, unsigned Index)
 {
-    return IzotUpdateAliasConfig(Index, pAlias); 
+     return (IsiApiError)IzotUpdateAliasConfig(Index, pAlias);
 }
 
 IsiApiError update_config_data(const IzotConfigData *config_data1)
 {
     // Update the global copy of config data
     memcpy(&config_data, config_data1, sizeof(IzotConfigData));
-    return IzotUpdateConfigData(config_data1);  // call LTS IzotUpdateConfigData to update the config data 
+    return (IsiApiError)IzotUpdateConfigData(config_data1);  // call LTS IzotUpdateConfigData to update the config data 
 }
 
 IzotConfigData* get_config_data()
@@ -414,7 +414,7 @@ IzotByte* get_nv_value(const unsigned index)
 
 IsiApiError service_pin_msg_send()
 {
-    return IzotSendServicePin();
+    return (IsiApiError)IzotSendServicePin();
 }
 
 void node_reset()
@@ -424,16 +424,16 @@ void node_reset()
 
 IsiApiError retrieve_status(IzotStatus* status)
 {
-    return IzotQueryStatus(status);       
+    return (IsiApiError)IzotQueryStatus(status);
 }
 
 // Initialize the persitent data, connection table, config_data and read_only_data
 IsiApiError initializeData(IsiBootType bootType)
 {
-    IsiApiError sts = IzotQueryConfigData(&config_data);
+    IsiApiError sts = (IsiApiError)IzotQueryConfigData(&config_data);
    
     if (sts == IsiApiNoError) {
-        sts = IzotQueryReadOnlyData(&read_only_data);
+        sts = (IsiApiError)IzotQueryReadOnlyData(&read_only_data);
     }
 
 #if ISI_IS(SIMPLE) || ISI_IS(DA)
@@ -459,7 +459,7 @@ IsiApiError initializeData(IsiBootType bootType)
 
 IsiApiError set_node_mode(unsigned mode, unsigned state)
 {
-	return IzotSetNodeMode(mode, state);
+	return (IsiApiError)IzotSetNodeMode(mode, state);
 }
 
 #ifdef  __cplusplus
