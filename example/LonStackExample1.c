@@ -266,10 +266,10 @@ IzotApiError SetUpExample1(void)
 
 IzotApiError LoopExample1(void)
 {
-    IzotApiError ret = IzotApiNoError;
+    IzotApiError lastError = IzotApiNoError;
 
     // LON Stack event pump
-    ret = IzotEventPump();
+    IzotEventPump();
 
     // ToDo -- add application-specific event-handlers here, or in separate tasks if available.
     // Keep these handlers under min(10, ((InputBufferCount - 1) * 1000) / MaxPacketRate) milliseconds.
@@ -292,7 +292,7 @@ IzotApiError LoopExample1(void)
         // TBD -- increment temp2Out
         IzotPropagateByIndex(temp2OutDef.NvIndex);
     }
-    return ret;
+    return lastError;
 }
 
 // Function: SetUpAddressTable()
@@ -448,6 +448,8 @@ void Example1DatapointUpdateOccurred(const unsigned index, const IzotReceiveAddr
 
 void HeartbeatInUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
+    (void)index;
+    (void)pSourceAddress;
     // Change heartbeat timer interval to the updated value.
     SetHeartbeatTimer();
 }
@@ -455,6 +457,8 @@ void HeartbeatInUpdateOccurred(const unsigned index, const IzotReceiveAddress* c
 
 void Flow1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
+    (void)index;
+    (void)pSourceAddress;
     // Copy updated flow1In to flow1Out.
     memcpy(&flow1Out, &flow1In, sizeof(SNVT_flow_p));
 }
@@ -462,6 +466,8 @@ void Flow1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Flow2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
+    (void)index;
+    (void)pSourceAddress;
     // Copy updated flow2In to flow2Out.
     memcpy(&flow2Out, &flow2In, sizeof(SNVT_flow_f));
 }
@@ -469,6 +475,8 @@ void Flow2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Temp1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
+    (void)index;
+    (void)pSourceAddress;
     // Copy updated temp1In to temp1Out.
     memcpy(&temp1Out, &temp1In, sizeof(SNVT_temp_p));
 }
@@ -476,6 +484,8 @@ void Temp1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Temp2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
+    (void)index;
+    (void)pSourceAddress;
     // Copy updated temp2In to temp2Out.
     memcpy(&temp2Out, &temp2In, sizeof(SNVT_temp_p));
 }

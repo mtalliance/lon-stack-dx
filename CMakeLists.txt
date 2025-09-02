@@ -38,6 +38,7 @@ set(LON_STACK_DX_SOURCES
     ls_udp/LsMappingUtil.c
     persistence/IzotPersistentFlashDirect.c
     persistence/Persistent.c
+    example/LonStackExample1.c
 )
 
 set(LON_STACK_DX_HEADERS
@@ -82,6 +83,7 @@ set(LON_STACK_DX_HEADERS
     include/ls_udp/IPv4ToLsUdp.h
     include/persistence/IzotPersistentFlashDirect.h
     include/persistence/Persistent.h
+    example/LonStackExample1.h
 )
 
 # Create the library target
