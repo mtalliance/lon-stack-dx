@@ -67,11 +67,12 @@
  *              #if PROTOCOL_IS(LON_IP)
  *              #if SECURITY_IS(V2)
  */
+
+#include <stdint.h>
+
 #if !defined(_IZOT_CONFIG_H)
 #define _IZOT_CONFIG_H
-
-#error "This config use the default value..."
-
+ 
 // Conditional test macros
 #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
 #define DEBUG_IS(dbgid) (DEBUG_ID == DEBUG_ID_ ##dbgid)
@@ -165,22 +166,8 @@
 #define PRODUCT_ID 	  PRODUCT_ID_NA
 #define SECURITY_ID   SECURITY_ID_V1
 
+uint32_t os_ticks_get();
+void os_thread_sleep(uint32_t mSecTm);
+uint32_t os_msec_to_ticks(uint32_t nbTicks);
+
 #endif  // defined(_IZOT_CONFIG_H) 
-
-// Defined i IzotConfig
-    // #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
-    // #define ISI_IS(isiid) (ISI_ID == ISI_ID_ ## isiid)
-    // #define IUP_IS(iupid) (IUP_ID == IUP_ID_ ## iupid)
-    // #define LINK_IS(linkid) (LINK_ID == LINK_ID_ ## linkid)
-    // #define PRODUCT_IS(prodid) (PRODUCT_ID == PRODUCT_ID_ ## prodid)
-    // #define PROTOCOL_IS(protid) (PROTOCOL_ID == PROTOCOL_ID_ ## protid)
-    // #define SECURITY_IS(secid) (SECURITY_ID == SECURITY_ID_ ## secid)
-
-// Defined in Platform
-    // #define OS_IS(osid) (OS_ID == OS_ID_ ## osid)
-    // #define PROCESSOR_IS(procid) (PROCESSOR_ID == PROCESSOR_ID_ ## procid)
-
-// Not defined
-    // #define DEBUG_IS(dbgid) (DEBUG_ID == DEBUG_ID_ ##dbgid)
-
-
