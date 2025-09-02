@@ -79,9 +79,9 @@ IzotBool    is_connected;            // Flag to report IP link connectivity
  */
 
 static LonTimer linkCheckTimer;
+static int        app_udp_socket = -1;
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
-static int        app_udp_socket = -1;
 static int        provisioned;
 static struct fs *fs;
 static char       ssid_uap[MAX_SSID_LEN];
@@ -303,6 +303,7 @@ static void EventNormalUserDisconnect(void *data)
     is_connected = 0;
     CAL_Printf("Disconnected\r\n");
 }
+
 
 /*
  * Function: EventNormalLinkLost
@@ -572,7 +573,7 @@ IzotBool SetCurrentIP(void)
  */
 int InitSocket(int port)
 {
-#if PLATFORM_IS(FRTOS_ARM_EABI)
+#if PLATFORM_IS(FRTOS_ARM_EABI_REMOVE)
     struct sockaddr_in     sinme;
     
     // Open UDP socket for queue at start-up
@@ -698,7 +699,7 @@ void AddIpMembership(uint32_t addr)
 void CalSend(uint32_t port, IzotByte* addr, IzotByte* pData, 
 uint16_t dataLength)
 {
-#if PLATFORM_IS(FRTOS_ARM_EABI)
+#if PLATFORM_IS(FRTOS_ARM_EABI_REMOVE)
     IzotByte            loopch = 0;
     int                 sock = -1;
     int                 reuse = 1;
@@ -772,7 +773,7 @@ int CalReceive(IzotByte* pData, IzotByte* pSourceAddr)
 {
     int                 dataLength = 0;
 
-#if PLATFORM_IS(FRTOS_ARM_EABI)
+#if PLATFORM_IS(FRTOS_ARM_EABI_REMOVE)
     struct sockaddr_in  from;
     int                 fromLen = sizeof(from);
     uint32_t            SrcIP;
