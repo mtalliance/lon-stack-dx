@@ -79,7 +79,9 @@ IzotBool    is_connected;            // Flag to report IP link connectivity
  */
 
 static LonTimer linkCheckTimer;
-static int        app_udp_socket = -1;
+#if PLATFORM_IS(FRTOS_ARM_EABI_REMOVE)
+    static int        app_udp_socket = -1;
+#endif
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 static int        provisioned;

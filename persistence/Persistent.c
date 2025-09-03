@@ -377,7 +377,7 @@ IzotApiError IzotPersistentSegRestore(IzotPersistentSegType persistentSegType)
     if (IzotPersistentSegIsInTransaction(persistentSegType)) {
         reason = IzotApiPersistentFailure;
     } else {
-        IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistentSegType);
+        IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistentSegType); // ???
         memset(&hdr, 0, sizeof(hdr));
         if (persistentSegType != IzotPersistentSegUnassigned) {
             if (IzotPersistentSegRead(persistentSegType, 0, sizeof(hdr), &hdr) != 0) {

@@ -72,6 +72,12 @@
 
 #if !defined(_IZOT_CONFIG_H)
 #define _IZOT_CONFIG_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
  
 // Conditional test macros
 #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
@@ -166,8 +172,16 @@
 #define PRODUCT_ID 	  PRODUCT_ID_NA
 #define SECURITY_ID   SECURITY_ID_V1
 
-uint32_t os_ticks_get();
+typedef uint32_t (*getTickCallback)();
+void set_os_ticks_get( getTickCallback ptr);
+
 void os_thread_sleep(uint32_t mSecTm);
 uint32_t os_msec_to_ticks(uint32_t nbTicks);
+void *os_mem_alloc(uint32_t size);
+void os_mem_free(void *ptr);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif	// __cplusplus
 
 #endif  // defined(_IZOT_CONFIG_H) 

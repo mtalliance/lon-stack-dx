@@ -55,6 +55,12 @@
  * ticks per second can be determined by calling <GetTicksPerSecond>.
  * 
  */
+getTickCallback os_ticks_get = NULL;
+void set_os_ticks_get( getTickCallback ptr)
+{
+   os_ticks_get = ptr;
+}
+
 OsalTickCount IzotGetTickCount(void)
 {
     // Return the OS tick count.

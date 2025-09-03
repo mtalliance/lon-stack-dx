@@ -844,7 +844,7 @@ static void PrintTimeStamp()
     uint32_t time = IzotGetTickCount()*1000/GetTicksPerSecond();
     FLASH_PRINTF("[%d.%.3d]", time/1000, time % 1000);
 }
-#endif
+#endif // FLASH_DEBUG
 
 /* 
  *  Function: IzotPersistentGetSegName
@@ -857,6 +857,7 @@ static void PrintTimeStamp()
  *  Returns:
  *  Character string representing the persistent segment.  
  */
+#ifdef FLASH_DEBUG
 static const char *IzotPersistentGetSegName(IzotPersistentSegType persistentSegType)
 {
     const char *name = NULL;
@@ -885,3 +886,4 @@ static const char *IzotPersistentGetSegName(IzotPersistentSegType persistentSegT
     return name;
 }
 
+#endif // FLASH_DEBUG
