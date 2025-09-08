@@ -22,7 +22,8 @@
 // SOFTWARE.
 
 #include <string.h>
-#include "abstraction/IzotConfig.h"
+
+#include "izot/IzotPlatform.h"
 #include "izot/IzotApi.h"
 #include "ls_udp/IPv4ToLsUdp.h"
 #include "abstraction/IzotCal.h"
@@ -223,19 +224,20 @@ IzotByte nodeId)
  *  The length of the additional enclosed source address information
  * 
  */
-IzotByte Ipv4GetArbitrarySourceAddress(
-void *lsMappingHandle,
-IzotByte *pSourceIpAddress, 
-const IzotByte *pDomainId, 
-int domainIdLen,
-IzotByte *pEnclosedSource
-)
+IzotByte Ipv4GetArbitrarySourceAddress(void *lsMappingHandle,
+                IzotByte *pSourceIpAddress, const IzotByte *pDomainId, 
+                int domainIdLen, IzotByte *pEnclosedSource)
 {
     IzotByte enclosedSourceLen = 0;
     IzotByte foundAddress = FALSE;
     const IzotByte *pArbitraryAddress = NULL;
     IzotByte includeDomain = FALSE;
 
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
+    // If we don't have a valid IP address, we can't do anything
+    if (!is_connected) {
+        return 0;
+    }
 #if UIP_CONF_IPV6
     if (domainIdLen == 6)
 #else
@@ -298,6 +300,9 @@ IzotByte *pEnclosedSource
     }
 
     return enclosedSourceLen;
+#else
+    return 0;
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
 
 /*
@@ -505,14 +510,14 @@ const IzotByte *pSubnets
  * 
  * 
  */
-IzotByte Ipv4IsUnicastAddressSupported(
-void *lsMappingHandle, 
-IzotByte *ipAddress
-)
+IzotByte Ipv4IsUnicastAddressSupported(void *lsMappingHandle, 
+                IzotByte *ipAddress)
 {
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
     if (memcmp(ownIpAddress, ipAddress, sizeof(ownIpAddress)) == 0) {
         return TRUE;
     }
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
     return FALSE;
 }
 
