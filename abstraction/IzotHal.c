@@ -19,13 +19,12 @@
 extern "C" {
 #endif
 
-#include "abstraction/IzotConfig.h" // Project-specific configuration
- 
+#include "izot/IzotPlatform.h" // Project-specific configuration
+
 #if OS_IS(LINUX)
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -34,11 +33,14 @@ extern "C" {
 #include <unistd.h>
 #include <errno.h>
 #include <libgen.h>
-
 #ifndef SIOCGIFHWADDR
 #define SIOCGIFHWADDR 0x8927
 #endif
 #endif // OS_IS(LINUX)
+
+#if OS_IS(LINUX) || OS_IS(FREERTOS)
+#include <sys/types.h>
+#endif // OS_IS(LINUX) || OS_IS(FREERTOS)
 
 #if PROCESSOR_IS(MC200)
 #include <wm_os.h>
@@ -517,9 +519,9 @@ IzotApiError HalGetMacAddress(unsigned char *mac)
 
     return IzotApiNoError; // Success
 #elif PROCESSOR_IS(MC200)
-    return (wlan_get_mac_address(mac) ? IzotMacIdNotAvailable : IzotApiNoError);
+    return (wlan_get_mac_address(mac) ? IzotApiMacIdNotAvailable : IzotApiNoError);
 #else
-    return IzotMacIdNotAvailable;
+    return IzotApiMacIdNotAvailable;
 #endif
 }
 
