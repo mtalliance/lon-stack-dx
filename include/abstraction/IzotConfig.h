@@ -73,6 +73,8 @@
 #ifndef _IZOT_CONFIG_H
 #define _IZOT_CONFIG_H
 
+#error "ERROR IzotConfig.h must defined by application"
+
 #ifdef __cplusplus
 extern "C"
 {
