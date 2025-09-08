@@ -70,7 +70,7 @@
 
 #include <stdint.h>
 
-#if !defined(_IZOT_CONFIG_H)
+#ifndef _IZOT_CONFIG_H
 #define _IZOT_CONFIG_H
 
 #ifdef __cplusplus
@@ -172,13 +172,25 @@ extern "C"
 #define PRODUCT_ID 	  PRODUCT_ID_NA
 #define SECURITY_ID   SECURITY_ID_V1
 
-typedef uint32_t (*getTickCallback)();
-void set_os_ticks_get( getTickCallback ptr);
+typedef uint32_t (*ptrU32_Callback_V)();
+extern ptrU32_Callback_V os_ticks_get;
+void setPtr_os_ticks_get( ptrU32_Callback_V fPtr);
 
-void os_thread_sleep(uint32_t mSecTm);
-uint32_t os_msec_to_ticks(uint32_t nbTicks);
-void *os_mem_alloc(uint32_t size);
-void os_mem_free(void *ptr);
+typedef void (*ptrV_Callback_U32)(uint32_t mSec);
+extern ptrV_Callback_U32 os_thread_sleep;
+void setPtr_os_thread_sleep(ptrV_Callback_U32 fPtr);
+
+typedef uint32_t (*ptrU32_Callback_U32)(uint32_t nbTicks);
+extern ptrU32_Callback_U32 os_msec_to_ticks;
+void setPtr_os_msec_to_ticks(ptrU32_Callback_U32 fPtr);
+
+typedef void * (*ptrVp_Callback_U32)(uint32_t size);
+extern ptrVp_Callback_U32 os_mem_alloc;
+void setPtr_os_mem_alloc(ptrVp_Callback_U32 fPtr);
+
+typedef void (*ptrV_Callback_Vp)(void *ptr);
+extern ptrV_Callback_Vp os_mem_free;
+void setPtr_os_mem_free(ptrV_Callback_Vp fPtr);
 
 #ifdef __cplusplus
 } // extern "C"

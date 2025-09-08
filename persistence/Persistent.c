@@ -378,6 +378,8 @@ IzotApiError IzotPersistentSegRestore(IzotPersistentSegType persistentSegType)
         reason = IzotApiPersistentFailure;
     } else {
         IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistentSegType); // ???
+        (void)returnedSegType;
+        
         memset(&hdr, 0, sizeof(hdr));
         if (persistentSegType != IzotPersistentSegUnassigned) {
             if (IzotPersistentSegRead(persistentSegType, 0, sizeof(hdr), &hdr) != 0) {

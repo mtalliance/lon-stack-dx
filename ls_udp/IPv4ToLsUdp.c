@@ -167,6 +167,7 @@ static IzotByte getDomainLenEncoding(int domainLen)
  *  <void>.   
  *
  */
+ #if 0
 static void RestoreIpMembership(void)
 {
     IzotByte i;
@@ -191,6 +192,7 @@ static void RestoreIpMembership(void)
         AddIpMembership(bc_addr);
     }
 }
+#endif // if 0
 
 #if IPV4_INCLUDE_LTVX_LSUDP_TRANSLATION
 
@@ -421,6 +423,7 @@ static void Ipv4SendAnnouncement(IzotByte *msg, IzotByte len)
     // ptr to NPDU constructed.
     npduPtr = (IzotByte *)(lkSendParamPtr + 1);
 
+    (void)npduPtr;
 #if 0
 // TBD: following block crashes
     // Write the parameters for the link layer.
@@ -1164,9 +1167,8 @@ void SendAnnouncement(void)
  */
 void SetLsAddressFromIpAddr(void)
 {
-    IzotDomain domain;
-
 #if 0
+    IzotDomain domain;
 
     memset(&domain, 0, sizeof(IzotDomain));
     
