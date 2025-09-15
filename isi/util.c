@@ -408,7 +408,7 @@ IzotByte* get_nv_value(const unsigned index)
 
 IzotApiError service_pin_msg_send()
 {
-    return (IsiApiError)IzotSendServicePin();
+    return IzotSendServicePin();
 }
 
 void node_reset()
@@ -418,7 +418,7 @@ void node_reset()
 
 IzotApiError retrieve_status(IzotStatus* status)
 {
-    return (IsiApiError)IzotQueryStatus(status);
+    return IzotQueryStatus(status);       
 }
 
 /*
@@ -462,7 +462,7 @@ IzotApiError initializeData(IsiBootType bootType)
 
 IzotApiError set_node_mode(unsigned mode, unsigned state)
 {
-	return (IsiApiError)IzotSetNodeMode(mode, state);
+	return IzotSetNodeMode(mode, state);
 }
 
 #ifdef  __cplusplus

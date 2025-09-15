@@ -10,6 +10,7 @@ project(lon_stack_dx
 enable_language(C)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+option(LON_STACK_EXPORT_ENABLE      "Use LonStack as a library instead of a sub-project"      OFF)
 
 # Define sources and headers
 set(LON_STACK_DX_SOURCES
@@ -83,7 +84,6 @@ set(LON_STACK_DX_HEADERS
     include/ls_udp/IPv4ToLsUdp.h
     include/persistence/IzotPersistentFlashDirect.h
     include/persistence/Persistent.h
-    example/LonStackExample1.h
 )
 
 # Create the library target
@@ -105,6 +105,7 @@ target_include_directories(lon_stack_dx
 add_library(lon_stack_dx::lon_stack_dx ALIAS lon_stack_dx)
 
 # Installation rules
+if(LON_STACK_EXPORT_ENABLE)
 install(TARGETS lon_stack_dx
     EXPORT lon_stack_dxTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -129,6 +130,7 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
+endif() # end of LON_STACK_EXPORT_ENABLE
 
 configure_package_config_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lon_stack_dxConfig.cmake"

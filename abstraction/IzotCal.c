@@ -54,6 +54,7 @@ static LonTimer linkCheckTimer;
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
+static int        app_udp_socket = -1;
 static int        provisioned;
 static struct fs *fs;
 static char       ssid_uap[MAX_SSID_LEN];

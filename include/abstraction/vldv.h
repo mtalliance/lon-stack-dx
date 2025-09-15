@@ -92,11 +92,27 @@ enum
 typedef short LDVCode;
 
 C_API_START
-	
-LDVCode LDV_EXTERNAL_FN vldv_open(const char* pName, pShort handle);
-LDVCode LDV_EXTERNAL_FN vldv_close(short handle);
-LDVCode LDV_EXTERNAL_FN vldv_read(short handle, pVoid msg_p, short len);
-LDVCode LDV_EXTERNAL_FN vldv_write(short handle, pVoid msg_p, short len);
+
+typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_vldv_open)(const char* pName, pShort pHandle);
+extern ptrFct_Callback_vldv_open vldv_open;
+void setPtr_vldv_open( ptrFct_Callback_vldv_open fPtr);
+
+typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_vldv_close)(short handle);
+extern ptrFct_Callback_vldv_close vldv_close;
+void setPtr_vldv_close( ptrFct_Callback_vldv_close fPtr);
+
+typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_vldv_read)(short handle, pVoid msg_p, short len);
+extern ptrFct_Callback_vldv_read vldv_read;
+void setPtr_vldv_read( ptrFct_Callback_vldv_read fPtr);
+
+typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_vldv_write)(short handle, pVoid msg_p, short len);
+extern ptrFct_Callback_vldv_write vldv_write;
+void setPtr_vldv_write( ptrFct_Callback_vldv_write fPtr);
+
+// LDVCode LDV_EXTERNAL_FN vldv_open(const char* pName, pShort handle);
+//LDVCode LDV_EXTERNAL_FN vldv_close(short handle);
+//LDVCode LDV_EXTERNAL_FN vldv_read(short handle, pVoid msg_p, short len);
+//LDVCode LDV_EXTERNAL_FN vldv_write(short handle, pVoid msg_p, short len);
 
 C_API_END
 

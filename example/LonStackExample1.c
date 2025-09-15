@@ -28,7 +28,6 @@
 
 #include "LonStackExample1.h"   // Example declarations
 
-
 //
 // Section: Globals
 //
@@ -240,16 +239,17 @@ void main() {
 IzotApiError SetUpExample1(void)
 {
     IzotApiError lastError = IzotApiNoError;
-    IzotBool success = TRUE;
+    IzotBool success = false;
     IzotBool domainId = EXAMPLE_DOMAIN_ID;  // Use a 1-byte domain
 
     // Create, configure, and start the LON Stack
-    success =  IZOT_SUCCESS(lastError = IzotCreateStack(&LonStackInterface, &LonStackControlData)) 
-            && IZOT_SUCCESS(lastError = SetUpStaticNVs()) 
-            && IZOT_SUCCESS(lastError = IzotStartStack())
-            && IZOT_SUCCESS(lastError = IzotUpdateDomain(0, EXAMPLE_DOMAIN_LENGTH, (IzotByte*) &domainId, EXAMPLE_SUBNET, EXAMPLE_NODE))
-            && IZOT_SUCCESS(lastError = SetUpAddressTable())
-            && IZOT_SUCCESS(lastError = IzotDatapointUpdateOccurredRegistrar(&Example1DatapointUpdateOccurred));
+    if(IZOT_SUCCESS(lastError = IzotCreateStack(&LonStackInterface, &LonStackControlData)))
+        if(IZOT_SUCCESS(lastError = SetUpStaticNVs()))
+            if(IZOT_SUCCESS(lastError = IzotStartStack()))
+                if(IZOT_SUCCESS(lastError = IzotUpdateDomain(0, EXAMPLE_DOMAIN_LENGTH, (IzotByte*) &domainId, EXAMPLE_SUBNET, EXAMPLE_NODE)))
+                    if(IZOT_SUCCESS(lastError = SetUpAddressTable()))
+                        if(IZOT_SUCCESS(lastError = IzotDatapointUpdateOccurredRegistrar(&Example1DatapointUpdateOccurred)))
+                            success =  true;
 
     if (success) {
         // Start the heartbeat timer using the heartbeatIn NV default value

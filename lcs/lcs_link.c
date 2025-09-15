@@ -44,7 +44,8 @@
 #include "lcs/lcs_node.h"
 #include "lcs/lcs_queue.h"
 #include "lcs/lcs_netmgmt.h"
-#include "Ldv32.h"
+
+#include "abstraction/vldv.h"
 
 /*------------------------------------------------------------------------------
   Section: Constant Definitions
@@ -206,18 +207,18 @@ void LKReset(void)
 			while (1)
 			{
 			    const int MSGLEN = 5;
-				const L2Frame nidRead = {nicbLOCALNM, 14+MSGLEN, 0x70|LNM_TAG, 0x00, MSGLEN, 
+				const L2Frame nidRead = {nicbLOCALNM, 14+MSGLEN, {0x70|LNM_TAG, 0x00, MSGLEN, 
 										 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-								         NM_opcode_base|NM_READ_MEMORY, READ_ONLY_RELATIVE, 0x00, 0x00, UNIQUE_NODE_ID_LEN};
+								         NM_opcode_base|NM_READ_MEMORY, READ_ONLY_RELATIVE, 0x00, 0x00, UNIQUE_NODE_ID_LEN}};
 				L2Frame sicbIn;
-				TAKE_A_BREAK;
+				// TAKE_A_BREAK;
 				if (requestNid && vldv_write(handle, (void*)&nidRead, (short)(nidRead.len+2)) == LDV_OK)
 				{
 					requestNid = false;
 				}
 				if (vldv_read(handle, &sicbIn, sizeof(sicbIn)) == LDV_OK && sicbIn.cmd == nicbRESPONSE && (sicbIn.pdu[0]&0x0F) == LNM_TAG && sicbIn.pdu[14] == (NM_resp_success|NM_READ_MEMORY))
 				{
-					memcpy(eep->readOnlyData.uniqueNodeId, &sicbIn.pdu[15], UNIQUE_NODE_ID_LEN);
+					memcpy(eep->readOnlyData.UniqueNodeId, &sicbIn.pdu[15], UNIQUE_NODE_ID_LEN);
 					break;
 				}
 			}
@@ -258,7 +259,7 @@ void LKSend(void)
 	
 	if (setPhase)
 	{
-	    L2Frame mode = {nicbPHASE|2, 0};
+	    L2Frame mode = {nicbPHASE|2, 0,{0}};
 	    if (vldv_write(vniHandle[plcVni], &mode, 2) == LDV_OK)
 		{
 		    setPhase = false;
@@ -323,7 +324,7 @@ Comments:  Each item of the queue gp->lkInQ has the following form:
 *******************************************************************************/
 void LKReceive(void)
 {
-    NWReceiveParam *nwReceiveParamPtr;
+    TSAReceiveParam *nwReceiveParamPtr;
     IzotByte       *npduPtr;
     LPDUHeader     *lpduHeaderPtr;
     IzotByte       *tempPtr;
@@ -359,8 +360,7 @@ void LKReceive(void)
 	
 	/* Throw away packets that are smaller than 8 bytes long. */
 	/* For pseudo L2 MIP, CRC errors are reported with a short length. */
-	if (sicb.cmd == nicbINCOMING_L2M2 && lpduSize < 8 ||
-		(sicb.cmd&0xF0) == (nicbERROR&0xF0))
+    if ( ((sicb.cmd == nicbINCOMING_L2M2) && (lpduSize < 8)) || ((sicb.cmd & 0xF0) == (nicbERROR & 0xF0)) )
 	{
 	  	INCR_STATS(LcsTxError);
 		return;
@@ -486,9 +486,9 @@ void LKGetTransceiverParams(int index, XcvrParam *p)
 void LKFetchXcvr(void)
 {
 	const int msgLen = 1;
-	const L2Frame sicbOut = {nicbLOCALNM, 14+msgLen, 0x70|LNM_TAG, 0x00, msgLen, 
+	const L2Frame sicbOut = {nicbLOCALNM, 14+msgLen, {0x70|LNM_TAG, 0x00, msgLen, 
 							 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-							 ND_opcode_base|ND_QUERY_XCVR};
+							 ND_opcode_base|ND_QUERY_XCVR}};
 	// If write fails, we'll try again next time.
 	xcvrFetch = vldv_write(vniHandle[plcVni], (L2Frame*)&sicbOut, (short)(sicbOut.len+2)) != LDV_OK;
 }

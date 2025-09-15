@@ -32,6 +32,7 @@
 //
 
 #include "lcs/lcs.h"
+#include "lcs/lcs_link.h"
 
 
 // Application init functions
