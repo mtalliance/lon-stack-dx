@@ -1311,10 +1311,10 @@
  *****************************************************************/
 
 #if LINK_IS(USB)
-#define OpenLonLink OpenLonUsbLink
-#define CloseLonLink CloseLonUsbLink
-#define ReadLonLink  ReadLonUsbLink
-#define WriteLonLink WriteLonUsbLink
+//#define OpenLonLink OpenLonUsbLink
+//#define CloseLonLink CloseLonUsbLink
+//#define ReadLonLink  ReadLonUsbLink
+//#define WriteLonLink WriteLonUsbLink
 #elif LINK_IS(ETHERNET) || LINK_IS(WIFI)
 // No special definitions required for Ethernet or Wi-Fi UDP/IP links.  
 // Equivalent functions are defined in LsUDPReset(), LsUDPSend(), 

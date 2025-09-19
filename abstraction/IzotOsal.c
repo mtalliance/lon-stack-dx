@@ -118,7 +118,8 @@ OsalStatus OsalSleep(unsigned int msecs)
 #elif OS_IS(LINUX_KERNEL)
     msleep(msecs);          // Sleeps for the given number of milliseconds
 #elif OS_IS(FREERTOS)
-    vTaskDelay(pdMS_TO_TICKS(msecs)); // Uses the FreeRTOS tick conversion macro
+    os_thread_sleep(os_msec_to_ticks(msecs));
+    //vTaskDelay(pdMS_TO_TICKS(msecs)); // Uses the FreeRTOS tick conversion macro
 #elif PLATFORM_IS(RPI) || PLATFORM_IS(RPI_PICO)
     delay(msecs);
 #else

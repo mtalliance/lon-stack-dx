@@ -73,6 +73,11 @@ Status LCS_Init(IzotResetCause cause)
 {
     IzotByte   stackNum;
 
+    for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
+        gp = &protocolStackDataGbl[stackNum];
+		LKReset();
+    }
+
     // First init EEPROM based on custom.h, custom.c and default
     // values for several variables
     for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
@@ -102,13 +107,14 @@ Status LCS_Init(IzotResetCause cause)
 	    SetLonTimer(&gp->ledTimer, LED_TIMER_VALUE);
 		SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE); // Initial value
     }
+
 	return SUCCESS;
 }
 
 void LCS_Service()
 {
 	int stackNum;
-    for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
+	for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
 		gp  = &protocolStackDataGbl[stackNum];
 		eep = &eeprom[stackNum];
 		nmp = &nm[stackNum];

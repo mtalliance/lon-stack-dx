@@ -2,26 +2,26 @@
 #include "abstraction/vldv.h"
 
 
-ptrFct_Callback_vldv_open vldv_open = 0;
-void setPtr_vldv_open( ptrFct_Callback_vldv_open fPtr)
+ptrFct_Callback_OpenLonLink OpenLonLink = 0;
+void setPtr_OpenLonLink( ptrFct_Callback_OpenLonLink fPtr)
 {
-   vldv_open = fPtr;
+   OpenLonLink = fPtr;
 }
 
-ptrFct_Callback_vldv_close vldv_close = 0;
-void setPtr_vldv_close( ptrFct_Callback_vldv_close fPtr)
+ptrFct_Callback_CloseLonLink CloseLonLink = 0;
+void setPtr_CloseLonLink( ptrFct_Callback_CloseLonLink fPtr)
 {
-   vldv_close = fPtr;
+   CloseLonLink = fPtr;
 }
 
-ptrFct_Callback_vldv_read vldv_read = 0;
-void setPtr_vldv_read( ptrFct_Callback_vldv_read fPtr)
+ptrFct_Callback_ReadLonLink ReadLonLink = 0;
+void setPtr_ReadLonLink( ptrFct_Callback_ReadLonLink fPtr)
 {
-   vldv_read = fPtr;
+   ReadLonLink = fPtr;
 }
 
-ptrFct_Callback_vldv_write vldv_write = 0;
-void setPtr_vldv_write( ptrFct_Callback_vldv_write fPtr)
+ptrFct_Callback_WriteLonLink WriteLonLink = 0;
+void setPtr_WriteLonLink( ptrFct_Callback_WriteLonLink fPtr)
 {
-   vldv_write = fPtr;
+   WriteLonLink = fPtr;
 }
