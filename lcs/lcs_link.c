@@ -64,7 +64,7 @@ typedef struct {
 // LON network interface definition array
 LonNiDef lonNi[NUM_LON_NI] = {
 #if !PRODUCT_IS(SLB)
-	{"LON1", -1, false, true, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
+	{"LON1", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
 #elif NUM_LON_NI > 1
    , {"LON2", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
 #elif NUM_LON_NI > 2
@@ -171,7 +171,8 @@ void LKReset(void)
 		}
 		lonNi[niIndex].linkOpened = true;
 
-		if (lonNi[niIndex].isPowerLine) {
+		if (lonNi[niIndex].isPowerLine)
+        {
             anyPowerLineNi = true;
 			Bool requestUid = true;
 	
