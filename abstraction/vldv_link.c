@@ -1,7 +1,6 @@
 #include "abstraction/IzotConfig.h"
 #include "abstraction/vldv.h"
-
-
+/*
 ptrFct_Callback_OpenLonLink OpenLonLink = 0;
 void setPtr_OpenLonLink( ptrFct_Callback_OpenLonLink fPtr)
 {
@@ -25,3 +24,4 @@ void setPtr_WriteLonLink( ptrFct_Callback_WriteLonLink fPtr)
 {
    WriteLonLink = fPtr;
 }
+*/

@@ -141,7 +141,7 @@ void LKReset(void)
     gp->lkOutQCnt    = DecodeBufferCnt((IzotUbits16)gp->nwOutQCnt);
     queueItemSize    = gp->lkOutBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= SUCCESS) {
+    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= LS_SUCCESS) {
         ErrorMsg("LKReset: Unable to init the output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -152,7 +152,7 @@ void LKReset(void)
     gp->lkOutPriQCnt = DecodeBufferCnt((IzotUbits16)gp->nwOutPriQCnt);
     queueItemSize = gp->lkOutPriBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != LS_SUCCESS) {
         ErrorMsg("LKReset: Unable to initialize the priority output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -424,6 +424,7 @@ void LKReceive(void)
  * Returns:
  *   None
  */
+/*
 void CRC16(Byte bufInOut[], IzotUbits16 sizeIn)
 {
     IzotUbits16 poly = 0x1021;       // Generator polynomial
@@ -448,7 +449,7 @@ void CRC16(Byte bufInOut[], IzotUbits16 sizeIn)
     bufInOut[sizeIn + 1] = (crc & 0x00FF);
     return;
 }
-
+*/
 /*
  * Gets a pointer to the transceiver parameters for the specified LON network interface.
  * Parameters:

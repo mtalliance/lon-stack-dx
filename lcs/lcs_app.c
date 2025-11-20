@@ -182,19 +182,19 @@ Status AllocSendUnackd(PktCtrl ctrl, MsgTag tag, IzotSendAddress* pSrc,
 DestinType code, IzotByte data0, int len, IzotByte *pData)
 {
 	Queue	*nwOutQPtr = (ctrl&PKT_PRIORITY) ? &gp->nwOutPriQ : &gp->nwOutQ;
-	Status   sts = QueueFull(nwOutQPtr) ? FAILURE : SUCCESS;
+	Status   sts = QueueFull(nwOutQPtr) ? LS_FAILURE : LS_SUCCESS;
 
-	if (sts == SUCCESS && len+1 > gp->nwOutBufSize) {
-		DBG_vPrintf(TRUE, "AllocSendUnackd: FAILURE\n");
-		sts = FAILURE;
+	if (sts == LS_SUCCESS && len+1 > gp->nwOutBufSize) {
+		DBG_vPrintf(TRUE, "AllocSendUnackd: LS_FAILURE\n");
+		sts = LS_FAILURE;
 	}
 
-	if (sts == SUCCESS)	{
+	if (sts == LS_SUCCESS)	{
 		NWSendParam *nwSendParamPtr = QueueTail(nwOutQPtr);
 		nwSendParamPtr->dropIfUnconfigured = TRUE;
 		nwSendParamPtr->tag = tag;
 		sts = TSA_AddressConversion(pSrc, &nwSendParamPtr->destAddr);
-		if (sts == SUCCESS) {
+		if (sts == LS_SUCCESS) {
 			APDU *apduPtr               = (APDU *)(nwSendParamPtr + 1);
 			nwSendParamPtr->pduType     = APDU_TYPE;
 			nwSendParamPtr->deltaBL     = 0; // No ack generated
@@ -224,7 +224,7 @@ Comments:  None.
 Status AllocSendResponse(RequestId reqId, IzotByte nullResponse, IzotByte code, 
 int len, IzotByte *pData)
 {
-	Status sts = FAILURE;
+	Status sts = LS_FAILURE;
     if (!QueueFull(&gp->tsaRespQ)) {
 		TSASendParam *tsaSendParamPtr = QueueTail(&gp->tsaRespQ);
 		APDU         *apduRespPtr     = (APDU *)(tsaSendParamPtr + 1);
@@ -240,7 +240,7 @@ int len, IzotByte *pData)
             memcpy((char *)apduRespPtr + 1, pData, len);
             EnQueue(&gp->tsaRespQ);
         }
-		sts = SUCCESS;
+		sts = LS_SUCCESS;
     }
 	return sts;
 }
@@ -284,7 +284,7 @@ Status APPInit(void)
     IzotUbits16  sizeNeeded;
 
 	if (gp->initialized) {
-		return SUCCESS;
+		return LS_SUCCESS;
 	}
 
     gp->resetOk = TRUE;
@@ -293,7 +293,7 @@ Status APPInit(void)
 
     if (!gp->resetOk) {
 		DBG_vPrintf(TRUE, "APPInit: Reset failure");
-        return FAILURE;
+        return LS_FAILURE;
     }
 
     gp->unboundSelector       = 0x3FFF;  // Countdown as we assign
@@ -392,8 +392,8 @@ void APPReset(void)
     queueItemSize    = gp->appInBufSize + sizeof(APPReceiveParam);
 
     if (QueueInit(&gp->appInQ, queueItemSize, gp->appInQCnt)
-    != SUCCESS || QueueInit(&gp->appCeRspInQ, queueItemSize, gp->appInQCnt)
-	!= SUCCESS) {
+    != LS_SUCCESS || QueueInit(&gp->appCeRspInQ, queueItemSize, gp->appInQCnt)
+	!= LS_SUCCESS) {
     	DBG_vPrintf(TRUE, "APPReset: Unable to init Input Queues.\n");
         gp->resetOk = FALSE;
         return;
@@ -404,7 +404,7 @@ void APPReset(void)
     gp->appOutQCnt    = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_OUTBUF_CNT));
     queueItemSize    = gp->appOutBufSize + sizeof(APPSendParam);
 
-    if (QueueInit(&gp->appOutQ, queueItemSize, gp->appOutQCnt) != SUCCESS) {
+    if (QueueInit(&gp->appOutQ, queueItemSize, gp->appOutQCnt) != LS_SUCCESS) {
     	DBG_vPrintf(TRUE, "APPReset: Unable to init Output Queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -416,7 +416,7 @@ void APPReset(void)
     queueItemSize    = gp->appOutPriBufSize + sizeof(APPSendParam);
 
     if (QueueInit(&gp->appOutPriQ, queueItemSize, gp->appOutPriQCnt)
-    != SUCCESS) {
+    != LS_SUCCESS) {
     	DBG_vPrintf(TRUE, "APPReset: Unable to init Priority Output Queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -426,12 +426,12 @@ void APPReset(void)
     gp->nvOutIndexQCnt    = MAX_NV_OUT;
     gp->nvOutIndexBufSize = 2 + MAX_NV_LENGTH;
     if (QueueInit(&gp->nvOutIndexQ, gp->nvOutIndexBufSize,
-    gp->nvOutIndexQCnt)  != SUCCESS) {
+    gp->nvOutIndexQCnt)  != LS_SUCCESS) {
     	DBG_vPrintf(TRUE, "APPReset: Unable to init NV Out Index Queue.\n");
         gp->resetOk = FALSE;
         return;
     }
-    gp->nvOutStatus      = SUCCESS; // Propagate succeeds if all the scheduled
+    gp->nvOutStatus      = LS_SUCCESS; // Propagate succeeds if all the scheduled
                                     //  transactions complete successfully.
     gp->nvOutCanSchedule = TRUE;
     gp->nvOutIndex       = 0; // Not relevant initially
@@ -439,14 +439,14 @@ void APPReset(void)
     // Allocate Queue for NV input variable scheduling
     gp->nvInIndexQCnt = MAX_NV_IN;
     if (QueueInit(&gp->nvInIndexQ, 2, gp->nvInIndexQCnt)
-            != SUCCESS)
+            != LS_SUCCESS)
     {
     	DBG_vPrintf(TRUE, "APPReset: Unable to init NV In Index Queue.\n");
         gp->resetOk = FALSE;
         return;
     }
-    gp->nvInDataStatus  = FAILURE; // See node.h for usage
-    gp->nvInTranStatus  = SUCCESS; // See node.h for usage
+    gp->nvInDataStatus  = LS_FAILURE; // See node.h for usage
+    gp->nvInTranStatus  = LS_SUCCESS; // See node.h for usage
     gp->nvInCanSchedule = TRUE;
     gp->nvInIndex       = 0; // Not relevant initially
 
@@ -483,15 +483,15 @@ static void HandleMsgCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduP
     IzotUbits16 dim;
 
     if (appReceiveParamPtr->success) {
-        stat = SUCCESS;
+        stat = LS_SUCCESS;
     } else {
-        stat = FAILURE;
+        stat = LS_FAILURE;
     }
 
 #ifdef IZOT_PROXY
 	if (appReceiveParamPtr->proxy) {
 		if (ProcessLtepCompletion(appReceiveParamPtr, apduPtr, stat) 
-        != SUCCESS) {
+        != LS_SUCCESS) {
 			// We'll try this again later...
 		    DBG_vPrintf(TRUE, "HandleMsgCompletion: " 
             "Couldn't deliver proxy completion event");
@@ -522,14 +522,14 @@ static void HandleMsgCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduP
                     IsArrayNV(primaryIndex, &dim, &baseIndex);
                     gp->nvArrayIndex = primaryIndex - baseIndex;
                     // Set poll completion status */
-                    if ((gp->nvInDataStatus == SUCCESS) 
-                    && (gp->nvInTranStatus == SUCCESS)) {
-                        stat = SUCCESS;
+                    if ((gp->nvInDataStatus == LS_SUCCESS) 
+                    && (gp->nvInTranStatus == LS_SUCCESS)) {
+                        stat = LS_SUCCESS;
                     } else {
-                        stat = FAILURE;
+                        stat = LS_FAILURE;
                     } // poll completion status
-                    gp->nvInDataStatus = FAILURE; // Reinit
-                    gp->nvInTranStatus = SUCCESS;
+                    gp->nvInDataStatus = LS_FAILURE; // Reinit
+                    gp->nvInTranStatus = LS_SUCCESS;
                     if (AppPgmRuns()) {
                         IzotDatapointUpdateCompleted(baseIndex, stat);
                     }
@@ -537,9 +537,9 @@ static void HandleMsgCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduP
                     // Update the index. Since the last tag does not have the
                     //   index, we need to save it.
                     gp->nvInIndex = NV_INDEX_OF_TAG(appReceiveParamPtr->tag);
-                    if (stat == FAILURE) {
-                        // Set the flag to FAILURE as this transaction failed.
-                        gp->nvInTranStatus = FAILURE;
+                    if (stat == LS_FAILURE) {
+                        // Set the flag to LS_FAILURE as this transaction failed.
+                        gp->nvInTranStatus = LS_FAILURE;
                     }
                 }
                 gp->nvInCanSchedule = TRUE; // Resume scheduling
@@ -553,15 +553,15 @@ static void HandleMsgCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduP
                     IsArrayNV(primaryIndex, &dim, &baseIndex);
                     gp->nvArrayIndex = primaryIndex - baseIndex;
                     stat = gp->nvOutStatus;
-                    gp->nvOutStatus = SUCCESS; // Reinit
+                    gp->nvOutStatus = LS_SUCCESS; // Reinit
                     if (AppPgmRuns()) {
                         IzotDatapointUpdateCompleted(baseIndex, stat);
                     }
                 } else {
                     // Set index. Update gp->nvOutStatus
                     gp->nvOutIndex = NV_INDEX_OF_TAG(appReceiveParamPtr->tag);
-                    if (stat == FAILURE) {
-                        gp->nvOutStatus = FAILURE;
+                    if (stat == LS_FAILURE) {
+                        gp->nvOutStatus = LS_FAILURE;
                     }
                 }
                 gp->nvOutCanSchedule = TRUE; // Resume scheduling
@@ -669,7 +669,7 @@ static void HandleNormal(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
         if (appReceiveParamPtr->service == IzotServiceRequest)
         {
 			IzotByte code = apduPtr->code.ff.ffFlag == 0x4 ? FOREIGN_FRAME_OFFLINE : APPL_MSG_OFFLINE;
-			if (SendResponse(appReceiveParamPtr->reqId, code, 0, NULL) == FAILURE) {
+			if (SendResponse(appReceiveParamPtr->reqId, code, 0, NULL) == LS_FAILURE) {
 				// Try again later
 				return;
 			}
@@ -796,7 +796,7 @@ void APPSend(void)
         appSendParamPtr = QueueHead(appOutQPtr);
         apduPtr         = (APDU *)(appSendParamPtr + 1);
         status           = TryMsgSend(true, appSendParamPtr, apduPtr);
-        if (status == SUCCESS)
+        if (status == LS_SUCCESS)
         {
             /* We have moved this message. Discard it */
             DeQueue(appOutQPtr);
@@ -816,7 +816,7 @@ void APPSend(void)
         appSendParamPtr = QueueHead(appOutQPtr);
         apduPtr         = (APDU *)(appSendParamPtr + 1);
         status          = TryMsgSend(false, appSendParamPtr, apduPtr);
-        if (status == SUCCESS)
+        if (status == LS_SUCCESS)
         {
             /* We have moved this message. Discard it */
             DeQueue(appOutQPtr);
@@ -931,7 +931,7 @@ void APPMsgReceive(void)
 #ifdef IZOT_PROXY
 	else if (apduPtr->code.allBits == LT_APDU_ENHANCED_PROXY)
 	{
-		if (ProcessLTEP(appReceiveParamPtr, apduPtr) == SUCCESS)
+		if (ProcessLTEP(appReceiveParamPtr, apduPtr) == LS_SUCCESS)
 		{
 			DeQueue(&gp->appInQ);
 		}
@@ -990,7 +990,7 @@ void APPReceive(void)
 
 /*******************************************************************************
 Function:  TryMsgSend
-Returns:   SUCCESS if message sent, FAILURE otherwise
+Returns:   LS_SUCCESS if message sent, LS_FAILURE otherwise
 Reference: None
 Purpose:   If room is available, move message from app queue to
            to tsa or nw output queue.
@@ -1009,8 +1009,8 @@ static Status TryMsgSend(IzotByte priority,
     if (appSendParamPtr->addr.Unassigned.Type == IzotAddressUnassigned)
     {
         /* TurnAround is not possible with IzotSendAddress */
-		MsgCompletes(SUCCESS, appSendParamPtr->tag);
-        return(SUCCESS);
+		MsgCompletes(LS_SUCCESS, appSendParamPtr->tag);
+        return(LS_SUCCESS);
     }
 
     /* Simple unacknowledged messages go to network layer */
@@ -1019,8 +1019,8 @@ static Status TryMsgSend(IzotByte priority,
         if (appSendParamPtr->len+1 > gp->nwOutBufSize)
 		{
             /* Losing this packet as it is too large */
-			MsgCompletes(FAILURE, appSendParamPtr->tag);
-			return SUCCESS;
+			MsgCompletes(LS_FAILURE, appSendParamPtr->tag);
+			return LS_SUCCESS;
 		}
 		else
 		{
@@ -1034,7 +1034,7 @@ static Status TryMsgSend(IzotByte priority,
 
     if (QueueFull(tsaOutQPtr))
     {
-        return(FAILURE); /* Can't send message yet - try later */
+        return(LS_FAILURE); /* Can't send message yet - try later */
     }
 
     /* All other service types go to TSA layers */
@@ -1061,10 +1061,10 @@ static Status TryMsgSend(IzotByte priority,
     else
     {
         /* Losing this message */
-		MsgCompletes(FAILURE, appSendParamPtr->tag);
+		MsgCompletes(LS_FAILURE, appSendParamPtr->tag);
     }
 
-    return(SUCCESS);
+    return(LS_SUCCESS);
 }
 
 static void ReinitMsgOut(void)
@@ -1155,7 +1155,7 @@ void MsgSend(void)
            No place to put the message - discard it. This should
            not happen if application called MsgAlloc or
            MsgPriorityAlloc before forming the message */
-		MsgCompletes(FAILURE, gp->msgOut.tag);
+		MsgCompletes(LS_FAILURE, gp->msgOut.tag);
         ReinitMsgOut();
         return;
     }
@@ -1192,7 +1192,7 @@ void MsgSend(void)
     else
     {
         /* We are losing this message as it is too big. */
-		MsgCompletes(FAILURE, appSendParamPtr->tag);
+		MsgCompletes(LS_FAILURE, appSendParamPtr->tag);
         ReinitMsgOut();
         return;
     }
@@ -1211,7 +1211,7 @@ void MsgSend(void)
             /* ap cannot be NULL, but we can be safe in checking it anyway.
                We lose this message as the address table entry is unbound
                or turnaround. */
-			MsgCompletes(FAILURE, appSendParamPtr->tag);
+			MsgCompletes(LS_FAILURE, appSendParamPtr->tag);
             ReinitMsgOut();
             return;
         }
@@ -2304,7 +2304,7 @@ static void ProcessNVUpdate(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
         {
             // We have a response to poll message. 
             // Update gp->nvInDataStatus flag.
-            gp->nvInDataStatus = SUCCESS;
+            gp->nvInDataStatus = LS_SUCCESS;
         }
         
         if (izot_dp_prop[matchingPrimaryIndex].ibolSeq) 
@@ -2383,11 +2383,11 @@ static void ProcessNVUpdate(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 
 /*******************************************************************************
 Function: PropagateThisIndex
-Returns:  SUCCESS if the index is scheduled.
-          FAILURE if the queue is full and hence not scheduled
+Returns:  LS_SUCCESS if the index is scheduled.
+          LS_FAILURE if the queue is full and hence not scheduled
                   or for sync network output variables, the queue
                   buffer size is not sufficient for this variable.
-          INVALID if the index does not correspond to 
+          LS_INVALID if the index does not correspond to 
           IzotDatapointDirectionIsOutput
 Purpose:  To schedule a specific index of a network variable
           (primary or alias), polled or not.
@@ -2414,7 +2414,7 @@ static Status PropagateThisIndex(IzotBits16 nvIndexIn, IzotBits16 primaryIndex)
     /* If the variable is not output, then we can't propagate. */
     if (IZOT_GET_ATTRIBUTE_P(nvStructPtr, IZOT_DATAPOINT_DIRECTION) != IzotDatapointDirectionIsOutput)
     {
-        return(INVALID);
+        return(LS_INVALID);
     }
 
     indexQPtr = &gp->nvOutIndexQ;
@@ -2422,7 +2422,7 @@ static Status PropagateThisIndex(IzotBits16 nvIndexIn, IzotBits16 primaryIndex)
 
     if (QueueFull(indexQPtr))
     {
-        return(FAILURE); /* Could not schedule all. */
+        return(LS_FAILURE); /* Could not schedule all. */
     }
 
     indexPtr  = QueueTail(indexQPtr);
@@ -2439,7 +2439,7 @@ static Status PropagateThisIndex(IzotBits16 nvIndexIn, IzotBits16 primaryIndex)
         }
         else
         {
-            return(FAILURE);
+            return(LS_FAILURE);
         }
     }
     else
@@ -2447,7 +2447,7 @@ static Status PropagateThisIndex(IzotBits16 nvIndexIn, IzotBits16 primaryIndex)
         EnQueue(indexQPtr);
     }
 
-    return(SUCCESS);
+    return(LS_SUCCESS);
 }
 
 /*******************************************************************************
@@ -2485,7 +2485,7 @@ void  PropagateThisPrimary(IzotBits16 nvIndexIn)
         /* We need space for at least 2 entries to schedule.
            i.e we need to reserve one space for -1 at the end. */
         count = 0;
-        if (queueSpace > 1 && PropagateThisIndex(nvIndexIn, nvIndexIn) == SUCCESS)
+        if (queueSpace > 1 && PropagateThisIndex(nvIndexIn, nvIndexIn) == LS_SUCCESS)
         {
             count++;
             queueSpace--;
@@ -2499,7 +2499,7 @@ void  PropagateThisPrimary(IzotBits16 nvIndexIn)
             {
                 continue;
             }
-            if (PropagateThisIndex(j, nvIndexIn) == SUCCESS)
+            if (PropagateThisIndex(j, nvIndexIn) == LS_SUCCESS)
             {
                 count++;
                 queueSpace--;
@@ -2509,7 +2509,7 @@ void  PropagateThisPrimary(IzotBits16 nvIndexIn)
         {
             IsArrayNV(nvIndexIn, &dim, &baseIndex);
             gp->nvArrayIndex = nvIndexIn - baseIndex;
-            IzotDatapointUpdateCompleted(baseIndex, FAILURE);
+            IzotDatapointUpdateCompleted(baseIndex, LS_FAILURE);
         }
         else
         {
@@ -2524,7 +2524,7 @@ void  PropagateThisPrimary(IzotBits16 nvIndexIn)
     {
         IsArrayNV(nvIndexIn, &dim, &baseIndex);
         gp->nvArrayIndex = nvIndexIn - baseIndex;
-        IzotDatapointUpdateCompleted(baseIndex, SUCCESS);
+        IzotDatapointUpdateCompleted(baseIndex, LS_SUCCESS);
     }
 }
 
@@ -2989,9 +2989,9 @@ static void SendVar()
 
 /*******************************************************************************
 Function: PollThisIndex
-Returns:  SUCCESS if the index is scheduled.
-          FAILURE if the queue is full and hence not scheduled.
-          INVALID if the index does not correspond to 
+Returns:  LS_SUCCESS if the index is scheduled.
+          LS_FAILURE if the queue is full and hence not scheduled.
+          LS_INVALID if the index does not correspond to 
           IzotDatapointDirectionIsInput.
 Purpose:  To schedule a specific index of a network variable
           (primary or alias).
@@ -3009,19 +3009,19 @@ static Status PollThisIndex(IzotBits16 nvIndexIn)
     nvStructPtr      = GetNVStructPtr(nvIndexIn);
     if (IZOT_GET_ATTRIBUTE_P(nvStructPtr, IZOT_DATAPOINT_DIRECTION) != IzotDatapointDirectionIsInput)
     {
-        return(INVALID);
+        return(LS_INVALID);
     }
 
     indexQPtr = &gp->nvInIndexQ;
 
     if (QueueFull(indexQPtr))
     {
-        return(FAILURE); /* Could not schedule all. */
+        return(LS_FAILURE); /* Could not schedule all. */
     }
     indexPtr  = QueueTail(indexQPtr);
     *indexPtr = nvIndexIn;
     EnQueue(indexQPtr);
-    return(SUCCESS);
+    return(LS_SUCCESS);
 }
 
 /*******************************************************************************
@@ -3058,7 +3058,7 @@ void  PollThisPrimary(IzotBits16 nvIndexIn)
         /* We need space for at least 2 entries to schedule.
         i.e we need to reserve one space for -1 at the end. */
         count = 0;
-        if (queueSpace > 1 && PollThisIndex(nvIndexIn) == SUCCESS)
+        if (queueSpace > 1 && PollThisIndex(nvIndexIn) == LS_SUCCESS)
         {
             count++;
             queueSpace--;
@@ -3071,7 +3071,7 @@ void  PollThisPrimary(IzotBits16 nvIndexIn)
             {
                 continue;
             }
-            if (PollThisIndex(j) == SUCCESS)
+            if (PollThisIndex(j) == LS_SUCCESS)
             {
                 count++;
                 queueSpace--;
@@ -3081,7 +3081,7 @@ void  PollThisPrimary(IzotBits16 nvIndexIn)
         {
             IsArrayNV(nvIndexIn, &dim, &baseIndex);
             gp->nvArrayIndex = nvIndexIn - baseIndex;
-            IzotDatapointUpdateCompleted(baseIndex, FAILURE);
+            IzotDatapointUpdateCompleted(baseIndex, LS_FAILURE);
         }
         else
         {
@@ -3096,7 +3096,7 @@ void  PollThisPrimary(IzotBits16 nvIndexIn)
     {
         IsArrayNV(nvIndexIn, &dim, &baseIndex);
         gp->nvArrayIndex = nvIndexIn - baseIndex;
-        IzotDatapointUpdateCompleted(baseIndex, SUCCESS);
+        IzotDatapointUpdateCompleted(baseIndex, LS_SUCCESS);
     }
 }
 
@@ -3478,7 +3478,7 @@ static void PollVar(void)
             /* We did find a matching output variable and updated the polled variable */
             /* Note that even if one of the indices (primary or alias) is turnaround
                only, this flag is set to true. */
-            gp->nvInDataStatus = SUCCESS; /* to enable poll to succeed */
+            gp->nvInDataStatus = LS_SUCCESS; /* to enable poll to succeed */
         }
         DeQueue(indexQPtr);
         return;

@@ -451,7 +451,7 @@ static void Ipv4SendAnnouncement(IzotByte *msg, IzotByte len)
 void StartProtocolTimer(LonTimer *pTimer, IzotUbits32 *pTimeout, IzotByte *pMsg)
 {
     IzotUbits32 seconds = pMsg[0]<<24 | pMsg[1]<<16 | pMsg[2]<<8 | pMsg[3];
-    seconds = min(seconds, MAX_PROTOCOL_TIMER_SECONDS);
+    seconds = ls_min(seconds, MAX_PROTOCOL_TIMER_SECONDS);
     *pTimeout = seconds * 1000;      // Save timer duration for later resumption
     SetLonRepeatTimer(pTimer, *pTimeout, *pTimeout);
 }
@@ -924,7 +924,7 @@ void LsUDPReset(void)
     gp->lkOutQCnt     = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NW_OUTBUF_CNT));
     queueItemSize    = gp->lkOutBufSize + sizeof(LKSendParam) + 21;
 
-    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt) != LS_SUCCESS) {
         DBG_vPrintf(TRUE, "LsUDPReset: Unable to init the output queue.\r\n");
         gp->resetOk = FALSE;
         return;
@@ -935,7 +935,7 @@ void LsUDPReset(void)
     gp->lkOutPriQCnt    = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NW_OUT_PRICNT));
     queueItemSize       = gp->lkOutPriBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != LS_SUCCESS) {
         DBG_vPrintf(TRUE, "LsUDPReset: Unable to init the priority output queue.\r\n");
         gp->resetOk = FALSE;
         return;
@@ -1244,6 +1244,7 @@ int UdpInit(void)
         return ret;
     }
 
+#if LINK_IS_NOT(USB)
     // Initialize the UDP socket for communication
     ret = InitSocket(IPV4_LS_UDP_PORT); 
     if (ret < 0) {
@@ -1251,6 +1252,7 @@ int UdpInit(void)
         return IzotApiNoIpAddress;
     }
     DBG_vPrintf(TRUE, "Sockets created\r\n");
+#endif  // LINK_IS_NOT(USB)
 #endif  // LINK_IS(WIFI) || LINK_IS(ETHERNET) || LINK_IS(USB)
   
 #if 0

@@ -120,8 +120,8 @@ void TCSReset(void)
 
 /*****************************************************************
 Function:  NewTrans
-Returns:   SUCCESS if a transaction id can be assigned.
-           FAILURE if it is not possible to assign an id.
+Returns:   LS_SUCCESS if a transaction id can be assigned.
+           LS_FAILURE if it is not possible to assign an id.
 Purpose:   To get a new transaction id.
 Comments:  This function implements a new algorithm to assign the
            transaction id. It does not use the one in protocol specification.
@@ -172,7 +172,7 @@ Status NewTrans(IzotByte   priorityIn, DestinationAddress addrIn,
     if (transRecPtr->inProgress)
     {
         /* We can't allow a new transaction. Return failure. */
-        return(FAILURE);
+        return(LS_FAILURE);
     }
 
     /* We can allow the transaction. Allocate a new TID. */
@@ -270,7 +270,7 @@ Status NewTrans(IzotByte   priorityIn, DestinationAddress addrIn,
                    (IzotUbits16)(MIN_TABLE_TIME * 1000));
         *transNumOut = *transNumPtr;
         transRecPtr->inProgress = TRUE;
-        return(SUCCESS);
+        return(LS_SUCCESS);
     }
 
     /* No match. Make a new entry. If no space. get a space. */
@@ -297,7 +297,7 @@ Status NewTrans(IzotByte   priorityIn, DestinationAddress addrIn,
         else
         {
             /* Unable to find an entry. */
-            return(FAILURE);
+            return(LS_FAILURE);
         }
     }
 
@@ -351,7 +351,7 @@ Status NewTrans(IzotByte   priorityIn, DestinationAddress addrIn,
     *transNumOut      = *transNumPtr;
     (*tblSize)++;
     transRecPtr->inProgress = TRUE;
-    return(SUCCESS);
+    return(LS_SUCCESS);
 }
 
 /*****************************************************************

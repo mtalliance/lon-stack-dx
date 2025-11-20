@@ -25,7 +25,7 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_app.c
     lcs/lcs_custom.c
     lcs/lcs_eeprom.c
-    lcs/lcs_link.c
+    #lcs/lcs_link.c
     lcs/lcs_netmgmt.c
     lcs/lcs_network.c
     lcs/lcs_node.c
@@ -44,7 +44,7 @@ set(LON_STACK_DX_SOURCES
 
 set(LON_STACK_DX_HEADERS
     include/abstraction/IzotCal.h
-    include/abstraction/IzotConfig.h
+    #include/abstraction/IzotConfig.h
     include/abstraction/IzotEndian.h
     include/abstraction/IzotHal.h
     include/abstraction/IzotOsal.h

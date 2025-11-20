@@ -67,10 +67,17 @@
  *              #if PROTOCOL_IS(LON_IP)
  *              #if SECURITY_IS(V2)
  */
-#if !defined(_IZOT_CONFIG_H)
+
+#include <stdint.h>
+
+#ifndef _IZOT_CONFIG_H
 #define _IZOT_CONFIG_H
 
-#error "ERROR IzotConfig.h must defined by application"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
  
 // Conditional test macros
 #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
@@ -78,6 +85,7 @@
 #define ISI_IS(isiid) (ISI_ID == ISI_ID_ ## isiid)
 #define IUP_IS(iupid) (IUP_ID == IUP_ID_ ## iupid)
 #define LINK_IS(linkid) (LINK_ID == LINK_ID_ ## linkid)
+#define LINK_IS_NOT(linkid) (LINK_ID != LINK_ID_ ## linkid)
 #define OS_IS(osid) (OS_ID == OS_ID_ ## osid)
 #define PROCESSOR_IS(procid) (PROCESSOR_ID == PROCESSOR_ID_ ## procid)
 #define PRODUCT_IS(prodid) (PRODUCT_ID == PRODUCT_ID_ ## prodid)
@@ -157,8 +165,36 @@
  * Section: LON Stack Configuration Overrides
  *****************************************************************/
 // Add any overrides to the default settings in this section.
-#define PLATFORM_ID PLATFORM_ID_LINUX64_ARM_GCC
-#define LINK_ID LINK_ID_USB
+#define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
+#define LINK_ID     LINK_ID_USB
 #define PROTOCOL_ID PROTOCOL_ID_LON_NATIVE
+#define ISI_ID      ISI_ID_NO_ISI
+#define IUP_ID      IUP_ID_NO_IUP
+#define PRODUCT_ID 	  PRODUCT_ID_NA
+#define SECURITY_ID   SECURITY_ID_V1
+
+typedef uint32_t (*ptrU32_Callback_V)();
+extern ptrU32_Callback_V os_ticks_get;
+void setPtr_os_ticks_get( ptrU32_Callback_V fPtr);
+
+typedef void (*ptrV_Callback_U32)(uint32_t mSec);
+extern ptrV_Callback_U32 os_thread_sleep;
+void setPtr_os_thread_sleep(ptrV_Callback_U32 fPtr);
+
+typedef uint32_t (*ptrU32_Callback_U32)(uint32_t nbTicks);
+extern ptrU32_Callback_U32 os_msec_to_ticks;
+void setPtr_os_msec_to_ticks(ptrU32_Callback_U32 fPtr);
+
+typedef void * (*ptrVp_Callback_U32)(uint32_t size);
+extern ptrVp_Callback_U32 os_mem_alloc;
+void setPtr_os_mem_alloc(ptrVp_Callback_U32 fPtr);
+
+typedef void (*ptrV_Callback_Vp)(void *ptr);
+extern ptrV_Callback_Vp os_mem_free;
+void setPtr_os_mem_free(ptrV_Callback_Vp fPtr);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif	// __cplusplus
 
 #endif  // defined(_IZOT_CONFIG_H) 

@@ -628,7 +628,7 @@ void HandleNmeIupInit(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 
     // Fail if the Init Request does not have correct size
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IUP_InitRequest)) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     
@@ -800,7 +800,7 @@ void HandleNmeIupConfirm(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     
     // Fail if the request does not have correct size
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IUP_ConfirmRequest)) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     
@@ -891,7 +891,7 @@ void HandleNmeIupValidate(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     // Go with Success if Image is not going to be validate with digest
     if (validate_request->digestType == DIGEST_TYPE_NONE) {
 		if (appReceiveParamPtr->pduSize != 7) {
-			NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+			NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
 			return;
 		}
 		validate_response.resultCode = IUP_VALIDATE_RESULT_SUCCESS;
@@ -947,7 +947,7 @@ void HandleNmeIupSwitchOver(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     
     // Fail if the request does not have correct size
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IUP_SwitchOverRequest)) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     
@@ -1026,7 +1026,7 @@ void HandleNmeIupStatus(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     // Fail if the request does not have correct size
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IUP_StatusRequest)) {
         DBG_vPrintf(TRUE, "IUP Status: pck size is not proper\r\n");
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
      }
     
@@ -1084,7 +1084,7 @@ void HandleNmeIupCommit(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IUP_CommitRequest)) {
         DBG_vPrintf(TRUE, "IUP Commit: pck size is not proper...Erasing IUP data\r\n");
         EraseIupPersistData();
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     

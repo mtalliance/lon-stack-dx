@@ -124,13 +124,13 @@ Comments:  If an invalid index is given, log error message.
 Status UpdateDomain(const IzotDomain *domainInp, IzotByte indexIn, 
 IzotByte includeKey)
 {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     int nDomains = IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_TWO_DOMAINS) ? MAX_DOMAINS : 1;
     if (indexIn < nDomains) {
         memcpy(&eep->domainTable[indexIn], domainInp, includeKey ? sizeof(IzotDomain) : 
         sizeof(IzotDomain) - IZOT_AUTHENTICATION_KEY_LENGTH);
     } else {
-        sts = FAILURE;
+        sts = LS_FAILURE;
     }
     return sts;
 }
@@ -159,13 +159,13 @@ Comments:  None
 ******************************************************************/
 Status UpdateAddress(const IzotAddress *addrEntryInp, IzotUbits16 indexIn)
 {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
 
     if (indexIn < eep->readOnlyData.Extended) {
         eep->addrTable[indexIn] = *addrEntryInp;
     } else {
         LCS_RecordError(IzotInvalidAddrTableIndex);
-        sts = FAILURE;
+        sts = LS_FAILURE;
     }
 
     return sts;
@@ -479,11 +479,15 @@ Comments:
 ******************************************************************/
 void NodeReset(IzotByte firstReset)
 {
-
+#if LINK_IS_NOT(USB)
     void APPReset(void), TCSReset(void), TSAReset(void), NWReset(void), LsUDPReset(void);
-
     void (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset,  LsUDPReset};
 
+#else
+    void APPReset(void), TCSReset(void), TSAReset(void), NWReset(void);
+    void (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset};
+    
+#endif
     IzotByte fnNum, fnsCnt;
 
     if (!firstReset)
@@ -556,7 +560,7 @@ Comments:  Incomplete Initialization. Make sure it has the var you
 ******************************************************************/
 Status    InitEEPROM(uint32_t signature)
 {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     int i;
 
     // We first get the persistent data from NVM.
@@ -571,7 +575,7 @@ Status    InitEEPROM(uint32_t signature)
         if (err == ECHERR_INVALID_PARAM)
         {
             // This can occur if the NVM image has grown too large for the max PAL size
-            sts = FAILURE;
+            sts = LS_FAILURE;
         }
         else if (err != ECHERR_OK || 
         memcmp(&eep->dimensions, &dimensions, sizeof(dimensions)) || eep->signature != signature)
@@ -1028,7 +1032,7 @@ Status AppInit(void)
 #ifdef SECURITY_II
 	LtSecurityII_Init();
 #endif
-    return(SUCCESS);
+    return(LS_SUCCESS);
 };
 
 /****************************************************************************
@@ -1052,6 +1056,8 @@ void MsgCompletes(Status status, MsgTag tag)
 
 void DoApp(IzotBool isOnline) 
 {
+    (void)isOnline;
+
     MsgIn* msg_in = NULL;
     RespIn* rsp_in = NULL;
     

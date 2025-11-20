@@ -59,8 +59,14 @@
  *  Macro: STRING
  *  these (mystical) macros take the numbers above and create string equivalents
  */
+#ifndef STRING
 #define STRING(s)                   #s
+#endif
+
+#ifndef XSTRING
 #define XSTRING(s)                  STRING(s)
+#endif
+
 #define JOIN(x, y)                  x ## y
 #define JOIN3(x, y, z)              x ## y ## z
 #define XJOIN(x, y)                 JOIN(x, y)

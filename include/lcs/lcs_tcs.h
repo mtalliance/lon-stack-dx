@@ -83,7 +83,7 @@ void TCSReset(void);
 void   TransDone(IzotByte  priorityIn);
 void OverrideTrans(IzotByte   priorityIn, TransNum num);
 
-/* Return Values:      SUCCESS or FAILURE  */
+/* Return Values:      LS_SUCCESS or LS_FAILURE  */
 Status NewTrans(IzotByte   priorityIn, DestinationAddress addrIn,
                 TransNum *transNumOut);
 

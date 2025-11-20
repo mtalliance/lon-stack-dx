@@ -442,7 +442,7 @@ IZOT_EXTERNAL_FN IzotApiError IzotSendMsg(
     gp->msgOut.len            = length;
     gp->msgOut.code           = code;
     if(length > 255) {
-        MsgCompletes(FAILURE, gp->msgOut.tag);
+        MsgCompletes(LS_FAILURE, gp->msgOut.tag);
         return IzotApiMsgLengthTooLong;
     }
     memcpy(gp->msgOut.data, (void *) pData, length);
@@ -1380,15 +1380,27 @@ const IzotControlData * const pControlData)
     AliasTableCount = pInterface->Aliases;
     BindableMTagCount = pInterface->BindableMsgTags;
 
+#if LINK_IS_NOT(USB)
     // Start the IP stack if enabled and initialize a UDP socket for communication
     err = UdpInit();
     if (err != IzotApiNoError) {
         return err;
     }
+#else
+    // Init the LON Stack
+    LCS_Init(IzotPowerUpReset);
+
+    // Start the link
+    err = CalStart();
+    if (err != IzotApiNoError) {
+        return err;
+    }
+
+#endif
 
 #if LINK_IS(WIFI)
     UnlockDevice();
-    if (InitEEPROM(pInterface->Signature) != SUCCESS || APPInit() != SUCCESS) {
+    if (InitEEPROM(pInterface->Signature) != LS_SUCCESS || APPInit() != LS_SUCCESS) {
         err = IzotApiInitializationFailure;
     }
 
