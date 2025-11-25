@@ -141,8 +141,8 @@ DIFFERENTIAL     = 5
 /* Return status for all functions. */
 typedef enum __attribute__ ((packed))
 {
-LS_SUCCESS               = 0,
-LS_FAILURE               = 1,
+SUCCESS               = 0,
+FAILURE               = 1,
 LS_INVALID               = 2
 } Status_t;
 

@@ -38,8 +38,8 @@ extern "C" {
 
 // Function prototypes.
 
-IzotApiError SetUpExample1(void);
-IzotApiError LoopExample1(void);
+extern LonStatusCode SetUpExample1(void);
+extern LonStatusCode LoopExample1(void);
 
 // Domain definition.  
 

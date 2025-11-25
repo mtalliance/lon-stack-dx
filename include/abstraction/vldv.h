@@ -31,7 +31,7 @@
 #ifndef __VLDV_H
 #define __VLDV_H
 
-//#include "common/EchelonStandardDefinitions.h"
+#include "common/EchelonStandardDefinitions.h"
 
 // Local NI commands
 #define nicbRESPONSE		0x16
@@ -81,78 +81,21 @@ typedef char            * pStr;
 #undef LDVCODE
 #define LDVCODE(sym,val) LDV_##sym = val,
 
-#ifdef USE_INFRA
-typedef enum
-{
-	LDVCODES
-} LDVCode, LdvCode_e;
-#else
 enum
 {
 	LDVCODES
 };
+
 typedef short LDVCode;
-#endif
 
-
-//C_API_START
+C_API_START
 	
-#if 0 //  original Enocean
+LDVCode LDV_EXTERNAL_FN OpenLonLink(const char* name, pShort handle);
+LDVCode LDV_EXTERNAL_FN CloseLonLink(short handle);
+LDVCode LDV_EXTERNAL_FN ReadLonLink(short handle, pVoid msg, short len);
+LDVCode LDV_EXTERNAL_FN WriteLonLink(short handle, pVoid msg, short len);
 
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_OpenLonLink)(const char* pName, pShort pHandle);
-extern ptrFct_Callback_OpenLonLink OpenLonLink;
-void setPtr_OpenLonLink( ptrFct_Callback_OpenLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_CloseLonLink)(short handle);
-extern ptrFct_Callback_CloseLonLink CloseLonLink;
-void setPtr_CloseLonLink( ptrFct_Callback_CloseLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_ReadLonLink)(short handle, pVoid msg_p, short len);
-extern ptrFct_Callback_ReadLonLink ReadLonLink;
-void setPtr_ReadLonLink( ptrFct_Callback_ReadLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_WriteLonLink)(short handle, pVoid msg_p, short len);
-extern ptrFct_Callback_WriteLonLink WriteLonLink;
-void setPtr_WriteLonLink( ptrFct_Callback_WriteLonLink fPtr);
-
-#else   // MicroThermo
-
-/*
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_OpenLonLink)(void);
-extern ptrFct_Callback_OpenLonLink OpenLonLink;
-void setPtr_OpenLonLink( ptrFct_Callback_OpenLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_CloseLonLink)(void);
-extern ptrFct_Callback_CloseLonLink CloseLonLink;
-void setPtr_CloseLonLink( ptrFct_Callback_CloseLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_ReadLonLink)(void* pLON_ExtBuffer);
-extern ptrFct_Callback_ReadLonLink ReadLonLink;
-void setPtr_ReadLonLink( ptrFct_Callback_ReadLonLink fPtr);
-
-typedef LDVCode LDV_EXTERNAL_FN (*ptrFct_Callback_WriteLonLink)(void* pLON_ExtBuffer);
-extern ptrFct_Callback_WriteLonLink WriteLonLink;
-void setPtr_WriteLonLink( ptrFct_Callback_WriteLonLink fPtr);
-*/
-#endif
-
-#ifdef cplusplus
-extern "C"
-{
-#endif
-LDVCode OpenLonLink(void);
-//extern LDVCode CloseLonLink(void);
-LDVCode ReadLonLink(void* pBuffer);
-LDVCode WriteLonLink(void* pBuffer);
-#ifdef cplusplus
-}
-#endif
-//LDVCode LDV_EXTERNAL_FN OpenLonLink(const char* name, pShort handle);
-//LDVCode LDV_EXTERNAL_FN CloseLonLink(short handle);
-//LDVCode LDV_EXTERNAL_FN ReadLonLink(short handle, pVoid msg, short len);
-//LDVCode LDV_EXTERNAL_FN WriteLonLink(short handle, pVoid msg, short len);
-
-//C_API_END
+C_API_END
 
 #endif	// __VLDV_H
 

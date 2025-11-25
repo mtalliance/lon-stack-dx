@@ -32,7 +32,7 @@
 //
 
 #include "lcs/lcs.h"
-#include "lcs/lcs_link.h"
+//#include "lcs/lcs_link.h"
 
 
 // Application init functions
@@ -73,11 +73,6 @@ Status LCS_Init(IzotResetCause cause)
 {
     IzotByte   stackNum;
 
-    for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
-        gp = &protocolStackDataGbl[stackNum];
-		LKReset();
-    }
-
     // First init EEPROM based on custom.h, custom.c and default
     // values for several variables
     for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
@@ -96,8 +91,8 @@ Status LCS_Init(IzotResetCause cause)
         nmp = &nm[stackNum];
         snvt_capability_info = &capability_info;
         si_header_ext = &header_ext;
-        if (APPInit() == LS_FAILURE) {
-			return LS_FAILURE;
+        if (APPInit() == FAILURE) {
+			return FAILURE;
 		}
         // Compute the configCheckSum for the first time. NodeReset
         // will not verify checkSum firt time.
@@ -108,13 +103,13 @@ Status LCS_Init(IzotResetCause cause)
 		SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE); // Initial value
     }
 
-	return LS_SUCCESS;
+	return SUCCESS;
 }
 
 void LCS_Service()
 {
 	int stackNum;
-	for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
+    for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
 		gp  = &protocolStackDataGbl[stackNum];
 		eep = &eeprom[stackNum];
 		nmp = &nm[stackNum];

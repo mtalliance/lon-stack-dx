@@ -53,7 +53,7 @@ static LonTimer lonLinkXcvrPlFetchTimer;
 // LON network interface definition structure
 typedef struct {
     char *name;
-    LonLinkHandle lonLinkhandle;
+    LonLinkHandle handle;
     Bool linkOpened;
 	Bool isPowerLine;
     Bool fetchXcvrParams;
@@ -64,17 +64,17 @@ typedef struct {
 // LON network interface definition array
 LonNiDef lonNi[NUM_LON_NI] = {
 #if !PRODUCT_IS(SLB)
-	{"LON1", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
+	{"LON1", -1, false, false, false, {0}, false}
 #elif NUM_LON_NI > 1
-   , {"LON2", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
+   , {"LON2", -1, false, false, false, {0}, false}
 #elif NUM_LON_NI > 2
-   , {"LON3", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
+   , {"LON3", -1, false, false, false, {0}, false}
 #elif NUM_LON_NI > 3
-   , {"LON4", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false}
+   , {"LON4", -1, false, false, false, {0}, false}
 #else   // PRODUCT_IS(SLB)
-    {"RF", -1, false, false, false, {{0, 0, 0, 0, 0, 0, 0}}, false},
+    {"RF", -1, false, false, false, {0}, false},
 #if NUM_LON_NI == 2
-	{"PLC", -1, false, true, true, {{0, 0, 0, 0, 0, 0, 0}}, true}
+	{"PLC", -1, false, true, true, {0}, true}
 #endif  // NUM_LON_NI == 2	  
 #endif  // PRODUCT_IS(SLB)
 };
@@ -141,7 +141,7 @@ void LKReset(void)
     gp->lkOutQCnt    = DecodeBufferCnt((IzotUbits16)gp->nwOutQCnt);
     queueItemSize    = gp->lkOutBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= LS_SUCCESS) {
+    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= SUCCESS) {
         ErrorMsg("LKReset: Unable to init the output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -152,7 +152,7 @@ void LKReset(void)
     gp->lkOutPriQCnt = DecodeBufferCnt((IzotUbits16)gp->nwOutPriQCnt);
     queueItemSize = gp->lkOutPriBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != LS_SUCCESS) {
+    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != SUCCESS) {
         ErrorMsg("LKReset: Unable to initialize the priority output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -171,8 +171,7 @@ void LKReset(void)
 		}
 		lonNi[niIndex].linkOpened = true;
 
-		if (lonNi[niIndex].isPowerLine)
-        {
+		if (lonNi[niIndex].isPowerLine) {
             anyPowerLineNi = true;
 			Bool requestUid = true;
 	
@@ -181,11 +180,11 @@ void LKReset(void)
             // and try again
 			while (1) {
 			    const int messageLength = 5;
-				const L2Frame nidRead = {nicbLOCALNM, (14+messageLength),
-                        {0x70|LNM_TAG, 0x00, messageLength, 0x00, 0x00, 0x00,
+				const L2Frame nidRead = {nicbLOCALNM, 14+messageLength,
+                        0x70|LNM_TAG, 0x00, messageLength, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         NM_opcode_base|NM_READ_MEMORY, READ_ONLY_RELATIVE, 
-                        0x00, 0x00, UNIQUE_NODE_ID_LEN}};
+                        0x00, 0x00, UNIQUE_NODE_ID_LEN};
 				L2Frame sicbIn;
 				OsalSleep(UNIQUE_ID_FETCH_INTERVAL);
 				if (requestUid && WriteLonLink(handle, (void*)&nidRead, (short)(nidRead.len+2)) == LDV_OK) {
@@ -201,7 +200,7 @@ void LKReset(void)
 			}
             LKFetchXcvrPl(niIndex);
 		}
-  	    lonNi[niIndex].lonLinkhandle = handle;
+  	    lonNi[niIndex].handle = handle;
 	}
 
     gp->resetOk = TRUE;
@@ -243,9 +242,8 @@ void LKSend(void)
             LKFetchXcvrPl(niIndex);
         }
         if (lonNi[niIndex].isPowerLine && lonNi[niIndex].setPlPhase) {
-            L2Frame mode = {(nicbPHASE | 2), 0, {0}};
-            
-            lonNi[niIndex].setPlPhase = WriteLonLink(lonNi[niIndex].lonLinkhandle, &mode, 2) != LDV_OK;
+            L2Frame mode = {nicbPHASE|2, 0};
+            lonNi[niIndex].setPlPhase = WriteLonLink(lonNi[niIndex].handle, &mode, 2) != LDV_OK;
         }
     }
 
@@ -278,7 +276,7 @@ void LKSend(void)
 	
     // Send the LPDU to all LON network interfaces
 	for (niIndex=0; niIndex<NUM_LON_NI; niIndex++) {
-		WriteLonLink(lonNi[niIndex].lonLinkhandle, &sicb, (short)(sicb.len+2));
+		WriteLonLink(lonNi[niIndex].handle, &sicb, (short)(sicb.len+2));
 	}
 
 	DeQueue(lkSendQueuePtr);
@@ -306,7 +304,7 @@ void LKSend(void)
  */
 void LKReceive(void)
 {
-    TSAReceiveParam *nwReceiveParamPtr;
+    NWReceiveParam *nwReceiveParamPtr;
     IzotByte       *npduPtr;
     LPDUHeader     *lpduHeaderPtr;
     IzotByte       *tempPtr;
@@ -315,7 +313,7 @@ void LKReceive(void)
 	int				niIndex;
 	
 	for (niIndex=0; niIndex<NUM_LON_NI; niIndex++) {
-		if (ReadLonLink(lonNi[niIndex].lonLinkhandle, &sicb, sizeof(sicb)) == LDV_OK) {
+		if (ReadLonLink(lonNi[niIndex].handle, &sicb, sizeof(sicb)) == LDV_OK) {
             // Packet found to process
 			break;
 		}
@@ -342,7 +340,8 @@ void LKReceive(void)
 	// Throw away layer 2 mode 2 packets that are smaller than 8 bytes long;
     // layer 2 mode 2 network interfaces report CRC errors as a packet with
     // a short length
-	if (((sicb.cmd == nicbINCOMING_L2M2) && (lpduSize < 8)) || ((sicb.cmd & 0xF0) == (nicbERROR & 0xF0))){
+	if (sicb.cmd == nicbINCOMING_L2M2 && lpduSize < 8 ||
+		(sicb.cmd&0xF0) == (nicbERROR&0xF0)) {
 	  	INCR_STATS(LcsTxError);
 		return;
 	} else if (sicb.cmd != nicbINCOMING_L2M2) {
@@ -424,7 +423,6 @@ void LKReceive(void)
  * Returns:
  *   None
  */
-/*
 void CRC16(Byte bufInOut[], IzotUbits16 sizeIn)
 {
     IzotUbits16 poly = 0x1021;       // Generator polynomial
@@ -449,7 +447,7 @@ void CRC16(Byte bufInOut[], IzotUbits16 sizeIn)
     bufInOut[sizeIn + 1] = (crc & 0x00FF);
     return;
 }
-*/
+
 /*
  * Gets a pointer to the transceiver parameters for the specified LON network interface.
  * Parameters:
@@ -478,12 +476,12 @@ void LKGetXcvrParams(int niIndex, XcvrParam *p)
 void LKFetchXcvrPl(int index)
 {
 	const int msgLen = 1;
-	const L2Frame sicbOut = {nicbLOCALNM, 14+msgLen, {0x70|LNM_TAG, 0x00, msgLen, 
+	const L2Frame sicbOut = {nicbLOCALNM, 14+msgLen, 0x70|LNM_TAG, 0x00, msgLen, 
 							 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-							 ND_opcode_base|ND_QUERY_XCVR}};
+							 ND_opcode_base|ND_QUERY_XCVR};
     if (lonNi[index].isPowerLine) {
 	    // Send the fetch message; if send fails, set the fetch flag to try again next time
-	    lonNi[index].fetchXcvrParams = WriteLonLink(lonNi[index].lonLinkhandle,
+	    lonNi[index].fetchXcvrParams = WriteLonLink(lonNi[index].handle,
                 (L2Frame*)&sicbOut, (short)(sicbOut.len+2)) != LDV_OK;
     }
 }

@@ -80,14 +80,14 @@ void processProxyRepeaterAsAgent(APPReceiveParam *appReceiveParamPtr, APDU *apdu
 
 Status ProcessLtepCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr, Status status)
 {
-	Status sts = LS_SUCCESS;
+	Status sts = SUCCESS;
 	if (!appReceiveParamPtr->proxyDone)
 	{
 		int len = 0;
 		IzotByte code = LT_ENHANCED_PROXY_SUCCESS;
 		IzotByte data[1];
 
-		if (status == LS_FAILURE)
+		if (status == FAILURE)
 		{
 			code = LT_ENHANCED_PROXY_FAILURE;
 			len = 1;
@@ -340,13 +340,13 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 		if (LonTimerExpired(&gp->proxyBufferWait))
 		{
 			SendResponse(appReceiveParamPtr->reqId, LT_ENHANCED_PROXY_FAILURE, sizeof(proxyCount), &proxyCount);
-			return LS_SUCCESS;
+			return SUCCESS;
 		}
 		else if (!LonTimerRunning(&gp->proxyBufferWait))
 		{
 			SetLonTimer(&gp->proxyBufferWait, 1000);
 		}
-        return LS_FAILURE;
+        return FAILURE;
     }
 	else
 	{
@@ -355,7 +355,7 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     // Include sanity checks on incoming packet length
     if (dataLen >= (int)(sizeof(ProxyHeader) + sizeof(ProxySicb) + 1) && offset <= dataLen)
     {
-		Status sts = LS_SUCCESS;
+		Status sts = SUCCESS;
 		dataLen -= offset;
 		if (service == IzotServiceUnacknowledged)
 		{
@@ -364,7 +364,7 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 		}
 		else if (dataLen+1 > gp->tsaOutBufSize)
 		{
-			sts = LS_FAILURE;
+			sts = FAILURE;
 		}
 		else
 		{						
@@ -392,11 +392,11 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 			tsaSendParamPtr->destAddr 		= addr;
 			EnQueue(outQPtr);
 		}
-		if (sts == LS_FAILURE)
+		if (sts == FAILURE)
 		{
 			SendResponse(appReceiveParamPtr->reqId, LT_ENHANCED_PROXY_FAILURE, sizeof(proxyCount), &proxyCount);
 		}
 	}
-	return LS_SUCCESS;
+	return SUCCESS;
 }
 #endif // ENABLE_PROXY_REPEATING

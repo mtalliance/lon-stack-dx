@@ -191,8 +191,8 @@ static LonTimer HeartbeatTimer;
 // Section: Prototypes
 //
 
-IzotApiError SetUpAddressTable(void);
-IzotApiError SetUpStaticNVs(void);
+LonStatusCode SetUpAddressTable(void);
+LonStatusCode SetUpStaticNVs(void);
 void Example1DatapointUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress);
 void SetHeartbeatTimer(void);
 void HeartbeatInUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress);
@@ -214,7 +214,7 @@ void Temp2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 #ifdef INCLUDE_EXAMPLE_MAIN
 void main() {
-    IzotApiError lastError = IzotApiNoError;
+    LonStatusCode lastError = LonStatusNoError;
     IzotBool success = TRUE;
 
     // Set up Example1
@@ -234,22 +234,21 @@ void main() {
 // Initial setup for this application, call from main() when 
 // using C.
 //
-// Returns: <IzotApiError>
+// Returns: <LonStatusCode>
 
-IzotApiError SetUpExample1(void)
+LonStatusCode SetUpExample1(void)
 {
-    IzotApiError lastError = IzotApiNoError;
-    IzotBool success = false;
+    LonStatusCode lastError = LonStatusNoError;
+    IzotBool success = TRUE;
     IzotBool domainId = EXAMPLE_DOMAIN_ID;  // Use a 1-byte domain
 
     // Create, configure, and start the LON Stack
-    if(IZOT_SUCCESS(lastError = IzotCreateStack(&LonStackInterface, &LonStackControlData)))
-        if(IZOT_SUCCESS(lastError = SetUpStaticNVs()))
-            if(IZOT_SUCCESS(lastError = IzotStartStack()))
-                if(IZOT_SUCCESS(lastError = IzotUpdateDomain(0, EXAMPLE_DOMAIN_LENGTH, (IzotByte*) &domainId, EXAMPLE_SUBNET, EXAMPLE_NODE)))
-                    if(IZOT_SUCCESS(lastError = SetUpAddressTable()))
-                        if(IZOT_SUCCESS(lastError = IzotDatapointUpdateOccurredRegistrar(&Example1DatapointUpdateOccurred)))
-                            success =  true;
+    success =  IZOT_SUCCESS(lastError = IzotCreateStack(&LonStackInterface, &LonStackControlData)) 
+            && IZOT_SUCCESS(lastError = SetUpStaticNVs()) 
+            && IZOT_SUCCESS(lastError = IzotStartStack())
+            && IZOT_SUCCESS(lastError = IzotUpdateDomain(0, EXAMPLE_DOMAIN_LENGTH, (IzotByte*) &domainId, EXAMPLE_SUBNET, EXAMPLE_NODE))
+            && IZOT_SUCCESS(lastError = SetUpAddressTable())
+            && IZOT_SUCCESS(lastError = IzotDatapointUpdateOccurredRegistrar(&Example1DatapointUpdateOccurred));
 
     if (success) {
         // Start the heartbeat timer using the heartbeatIn NV default value
@@ -264,12 +263,12 @@ IzotApiError SetUpExample1(void)
 // Event loop code for a single pass of the Example 1 event loop.
 // Call from an event loop when using C.
 
-IzotApiError LoopExample1(void)
+LonStatusCode LoopExample1(void)
 {
-    IzotApiError lastError = IzotApiNoError;
+    LonStatusCode ret = LonStatusNoError;
 
     // LON Stack event pump
-    IzotEventPump();
+    ret = IzotEventPump();
 
     // ToDo -- add application-specific event-handlers here, or in separate tasks if available.
     // Keep these handlers under min(10, ((InputBufferCount - 1) * 1000) / MaxPacketRate) milliseconds.
@@ -292,18 +291,18 @@ IzotApiError LoopExample1(void)
         // TBD -- increment temp2Out
         IzotPropagateByIndex(temp2OutDef.NvIndex);
     }
-    return lastError;
+    return ret;
 }
 
 // Function: SetUpAddressTable()
 // Sets up a simple single address table for this application.
 //
-// Returns: <IzotApiError>
+// Returns: <LonStatusCode>
 
-IzotApiError SetUpAddressTable(void)
+LonStatusCode SetUpAddressTable(void)
 {
     IzotAddress AddressTableEntry = {}; 
-    IzotApiError lastError = IzotApiNoError;
+    LonStatusCode lastError = LonStatusNoError;
 
     AddressTableEntry.SubnetNode.Type = IzotAddressSubnetNode;
     IZOT_SET_ATTRIBUTE(AddressTableEntry.SubnetNode, IZOT_ADDRESS_SN_DOMAIN, 0);
@@ -321,11 +320,11 @@ IzotApiError SetUpAddressTable(void)
 // Function: SetUpStaticNVs()
 // Creates and binds the static NVs for this application.
 //
-// Returns: <IzotApiError>
+// Returns: <LonStatusCode>
 
-IzotApiError SetUpStaticNVs(void)
+LonStatusCode SetUpStaticNVs(void)
 {
-    IzotApiError lastError = IzotApiNoError;
+    LonStatusCode lastError = LonStatusNoError;
     IzotBool success = TRUE;
 
     // Specify static configuration with: IzotDatapointSetup(IzotDatapointDefinition* pDatapointDef, volatile void const *value, IzotDatapointSize size, 
@@ -448,8 +447,6 @@ void Example1DatapointUpdateOccurred(const unsigned index, const IzotReceiveAddr
 
 void HeartbeatInUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
-    (void)index;
-    (void)pSourceAddress;
     // Change heartbeat timer interval to the updated value.
     SetHeartbeatTimer();
 }
@@ -457,8 +454,6 @@ void HeartbeatInUpdateOccurred(const unsigned index, const IzotReceiveAddress* c
 
 void Flow1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
-    (void)index;
-    (void)pSourceAddress;
     // Copy updated flow1In to flow1Out.
     memcpy(&flow1Out, &flow1In, sizeof(SNVT_flow_p));
 }
@@ -466,8 +461,6 @@ void Flow1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Flow2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
-    (void)index;
-    (void)pSourceAddress;
     // Copy updated flow2In to flow2Out.
     memcpy(&flow2Out, &flow2In, sizeof(SNVT_flow_f));
 }
@@ -475,8 +468,6 @@ void Flow2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Temp1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
-    (void)index;
-    (void)pSourceAddress;
     // Copy updated temp1In to temp1Out.
     memcpy(&temp1Out, &temp1In, sizeof(SNVT_temp_p));
 }
@@ -484,8 +475,6 @@ void Temp1InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const
 
 void Temp2InUpdateOccurred(const unsigned index, const IzotReceiveAddress* const pSourceAddress)
 {
-    (void)index;
-    (void)pSourceAddress;
     // Copy updated temp2In to temp2Out.
     memcpy(&temp2Out, &temp2In, sizeof(SNVT_temp_p));
 }

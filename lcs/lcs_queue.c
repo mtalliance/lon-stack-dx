@@ -195,7 +195,7 @@ void *QueueTail(Queue *qInp)
 
 /*****************************************************************
 Function:  QueueInit
-Returns:   Status the operation: LS_SUCCESS or LS_FAILURE
+Returns:   Status the operation: SUCCESS or FAILURE
 Reference: None
 Purpose:   To initialize the queue by allocating storage for data
            and recording the item size and cnt values (capacity).
@@ -209,7 +209,7 @@ Status QueueInit(Queue *qOut, IzotUbits16 itemSizeIn, IzotUbits16 qCntIn)
     qOut->data = AllocateStorage((IzotUbits16)(itemSizeIn * qCntIn));
     if (qOut->data == NULL)
     {
-        return(LS_FAILURE);
+        return(FAILURE);
     }
 
     /* Initialize other fields */
@@ -217,7 +217,7 @@ Status QueueInit(Queue *qOut, IzotUbits16 itemSizeIn, IzotUbits16 qCntIn)
     qOut->tail      = qOut->data;
     qOut->queueSize = 0;
 
-    return(LS_SUCCESS);
+    return(SUCCESS);
 }
 
 /*************************End of queue.c***************************/

@@ -168,7 +168,7 @@ void Encrypt(IzotByte rand[], APDU *apdu, IzotUbits16 apduSize, IzotByte *pKey,
  ******************************************************************/
 Status TSA_AddressConversion(IzotSendAddress* pSrc, DestinationAddress *pDst) 
 {
-    Status sts = LS_SUCCESS;
+    Status sts = SUCCESS;
 
     pDst->dmn.domainIndex = IZOT_GET_ATTRIBUTE(pSrc->SubnetNode, IZOT_SENDSN_DOMAIN);
 
@@ -180,7 +180,7 @@ Status TSA_AddressConversion(IzotSendAddress* pSrc, DestinationAddress *pDst)
         pDst->addressMode = (AddrMode) pSrc->SubnetNode.Type;
         switch (pDst->addressMode) {
         case IzotAddressUnassigned:
-            sts = LS_FAILURE;
+            sts = FAILURE;
             break;
         case AM_SUBNET_NODE:
             pDst->addr.addr2a.Subnet = pSrc->SubnetNode.Subnet;
@@ -200,7 +200,7 @@ Status TSA_AddressConversion(IzotSendAddress* pSrc, DestinationAddress *pDst)
         default:
             /* It must be some invalid value. Let us fail. */
             LCS_RecordError(IzotBadAddressType);
-            sts = LS_FAILURE;
+            sts = FAILURE;
         } /* switch */
     }
     return sts;
@@ -274,7 +274,7 @@ void TSAReset(void)
     gp->tsaInQCnt = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_INBUF_CNT));
     queueItemSize = gp->tsaInBufSize + sizeof(TSAReceiveParam);
     
-    if (QueueInit(&gp->tsaInQ, queueItemSize, gp->tsaInQCnt) != LS_SUCCESS) {
+    if (QueueInit(&gp->tsaInQ, queueItemSize, gp->tsaInQCnt) != SUCCESS) {
         DBG_vPrintf(TRUE, "TSAReset: Unable to initialize the input queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -286,7 +286,7 @@ void TSAReset(void)
     gp->tsaOutQCnt = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_OUTBUF_CNT));
     queueItemSize = gp->tsaOutBufSize + sizeof(TSASendParam);
     
-    if (QueueInit(&gp->tsaOutQ, queueItemSize, gp->tsaOutQCnt) != LS_SUCCESS) {
+    if (QueueInit(&gp->tsaOutQ, queueItemSize, gp->tsaOutQCnt) != SUCCESS) {
         DBG_vPrintf(TRUE, "TSAReset: Unable to initialize the output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -298,7 +298,7 @@ void TSAReset(void)
     gp->tsaOutPriQCnt = DecodeBufferCnt((IzotByte) IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_OUT_PRICNT));
     queueItemSize = gp->tsaOutPriBufSize + sizeof(TSASendParam);
     
-    if (QueueInit(&gp->tsaOutPriQ, queueItemSize, gp->tsaOutPriQCnt) != LS_SUCCESS) {
+    if (QueueInit(&gp->tsaOutPriQ, queueItemSize, gp->tsaOutPriQCnt) != SUCCESS) {
         DBG_vPrintf(TRUE, "TSAReset: Unable to initialize the priority output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -309,7 +309,7 @@ void TSAReset(void)
     gp->tsaRespQCnt = gp->tsaOutQCnt;
     queueItemSize = gp->tsaRespBufSize + sizeof(TSASendParam);
     
-    if (QueueInit(&gp->tsaRespQ, queueItemSize, gp->tsaRespQCnt) != LS_SUCCESS) {
+    if (QueueInit(&gp->tsaRespQ, queueItemSize, gp->tsaRespQCnt) != SUCCESS) {
         DBG_vPrintf(TRUE, "TSAReset: Unable to initialize the responses queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -913,7 +913,7 @@ txTimer = DecodeTxTimer((IzotByte) IZOT_GET_ATTRIBUTE(tsaSendParamPtr->destAddr.
 rptTimer = DecodeRptTimer((IzotByte) IZOT_GET_ATTRIBUTE(tsaSendParamPtr->destAddr.SubnetNode, IZOT_SENDSN_REPEAT_TIMER));
 retryCount = IZOT_GET_ATTRIBUTE(tsaSendParamPtr->destAddr.SubnetNode, IZOT_SENDSN_RETRY);
 
-if (TSA_AddressConversion(&tsaSendParamPtr->destAddr, &nwDestAddr) == LS_FAILURE) {
+if (TSA_AddressConversion(&tsaSendParamPtr->destAddr, &nwDestAddr) == FAILURE) {
     SendCompletion(tsaSendParamPtr, FALSE);
     return;
 }
@@ -928,7 +928,7 @@ if (nwDestAddr.addressMode == AM_BROADCAST) {
 
 /* Get transaction number using nwDestAddr. */
 status = NewTrans(priorityIn, nwDestAddr, &xmitRecPtr->transNum);
-if (status == LS_FAILURE) {
+if (status == FAILURE) {
     /* Unable to get the transaction number. Give up. Try later. */
     return;
 }

@@ -67,17 +67,8 @@
  *              #if PROTOCOL_IS(LON_IP)
  *              #if SECURITY_IS(V2)
  */
-
-#include <stdint.h>
-
-#ifndef _IZOT_CONFIG_H
+#if !defined(_IZOT_CONFIG_H)
 #define _IZOT_CONFIG_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
  
 // Conditional test macros
 #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
@@ -85,7 +76,6 @@ extern "C"
 #define ISI_IS(isiid) (ISI_ID == ISI_ID_ ## isiid)
 #define IUP_IS(iupid) (IUP_ID == IUP_ID_ ## iupid)
 #define LINK_IS(linkid) (LINK_ID == LINK_ID_ ## linkid)
-#define LINK_IS_NOT(linkid) (LINK_ID != LINK_ID_ ## linkid)
 #define OS_IS(osid) (OS_ID == OS_ID_ ## osid)
 #define PROCESSOR_IS(procid) (PROCESSOR_ID == PROCESSOR_ID_ ## procid)
 #define PRODUCT_IS(prodid) (PRODUCT_ID == PRODUCT_ID_ ## prodid)
