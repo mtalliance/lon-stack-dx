@@ -3677,10 +3677,14 @@ typedef void (*IzotisiTickFunction)(void);
     This value is indepedent of application buffer sizes mentioned
     earlier. Clearly it does not make sense for this value to be
     larger than application buffer size (out or in). */
+#ifndef MAX_DATA_SIZE
 #define MAX_DATA_SIZE 255
+#endif
 
 /* Maximum size of message on the wire (approximate, might be over sized a byte or two for safety.) */
+#ifndef MAX_PDU_SIZE
 #define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
+#endif
 
 /*********************************************************************
    NUM_ADDR_TBL_ENTRIES:

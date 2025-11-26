@@ -502,12 +502,13 @@ IZOT_EXTERNAL_FN LonStatusCode IzotSendResponse(
  *  send a response to every message with a service type of request, or release
  *  the correlator, but not both.
  */
+/* that does nothing at this point
 IZOT_EXTERNAL_FN LonStatusCode IzotReleaseCorrelator(const IzotCorrelator correlator)
 {
     UNUSED(correlator);
     return LonStatusInvalidOperation;
 }
-
+*/
 /*
  * *****************************************************************************
  * SECTION: EXTENDED API FUNCTIONS
@@ -1678,6 +1679,7 @@ IZOT_EXTERNAL_FN unsigned IzotGetStaticDatapointCount()
  *  Remarks:
  *  Get the Domain id from Local IP address
  */
+ /* that does nothing at this point
 IZOT_EXTERNAL_FN LonStatusCode IzotGetDidFromLocalAddress(IzotByte* pDid, IzotByte* pDidLen, IzotByte* pSub, 
 IzotByte* pNode)
 {
@@ -1706,7 +1708,7 @@ IzotByte* pNode)
     return LonStatusInvalidParameter;
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+*/
 /*
  *  Function: IzotIsFirstRun
  *  Determine whether or not an application is running for the first time.
@@ -1823,6 +1825,7 @@ unsigned IzotGetCurrentDatapointSize(const unsigned index)
  *  Note that resetting the IZOT device only affects the IZOT protocol
  *  stack and does not cause a processor or application software reset.
  */
+
 void IzotReset(const IzotResetNotification* const pResetNotification)
 {
     UNUSED(pResetNotification);
@@ -1989,6 +1992,7 @@ void IzotDatapointUpdateCompleted(const unsigned index, const IzotBool success)
  *  name or the self-documentation string in a subsequent message, and the
  *  IZOT protocol stack will call the <IzotDpTypeChanged> event handler.
  */
+#if 0
 void IzotDatapointdded(const unsigned index, const IzotDatapointDefinition* const pDpDef)
 {
     UNUSED(index);
@@ -2034,7 +2038,7 @@ void IzotDatapointDeleted(const unsigned index)
     UNUSED(index);
     //REMINDER: Not supported in DX
 }
-
+#endif
 /*
  *  Event: IzotMsgArrived
  *  Occurs when an application message arrives.

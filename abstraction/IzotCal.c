@@ -233,6 +233,7 @@ static void EventNormalConnecting(void *data)
  *   Network dependent services can be started here. These services
  *   can be stopped on disconnection and reset-to-provisioning events.
  */ 
+#if LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
 static void EventNormalConnected(void *data)
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -258,7 +259,7 @@ static void EventNormalConnected(void *data)
     SetLsAddressFromIpAddr();
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+#endif
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
@@ -378,7 +379,7 @@ static void EventProvClientDone(void *data)
  */
 int common_event_handler(int event, void *data)
 {
-#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
+#if LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
     switch (event) {
     case AF_EVT_WLAN_INIT_DONE:
         EventWlanInitDone(data);
@@ -414,7 +415,7 @@ int common_event_handler(int event, void *data)
         break;
     }
 
-#endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
+#endif  // LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
 
     return 0;
 }
@@ -426,6 +427,7 @@ int common_event_handler(int event, void *data)
  * Returns:
  *  None
  */
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void InitModules()
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -450,6 +452,7 @@ static void InitModules()
     set_reconnect_iter(5);
 #endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 }
+#endif
 
 /*
  * Starts the IP link.

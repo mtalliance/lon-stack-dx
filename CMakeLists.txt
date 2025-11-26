@@ -35,11 +35,11 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_timer.c
     lcs/lcs_tsa.c
     lcs/lcs.c
-    ls_udp/IPv4ToLsUdp.c
-    ls_udp/LsMappingUtil.c
+    #ls_udp/IPv4ToLsUdp.c
+    #ls_udp/LsMappingUtil.c
     persistence/IzotPersistentFlashDirect.c
     persistence/Persistent.c
-    example/LonStackExample1.c
+    #example/LonStackExample1.c
 )
 
 set(LON_STACK_DX_HEADERS
@@ -64,7 +64,7 @@ set(LON_STACK_DX_HEADERS
     include/izot/IzotIsiTypes.h
     include/izot/IzotPlatform.h
     include/izot/IzotTypes.h
-    include/lcs/iup.h
+    #include/lcs/iup.h
     include/lcs/lcs_api.h
     include/lcs/lcs_app.h
     include/lcs/lcs_custom.h
@@ -75,13 +75,13 @@ set(LON_STACK_DX_HEADERS
     include/lcs/lcs_node.h
     include/lcs/lcs_physical.h
     include/lcs/lcs_platform.h
-    include/lcs/lcs_proxy.h
+    #include/lcs/lcs_proxy.h
     include/lcs/lcs_queue.h
     include/lcs/lcs_tcs.h
     include/lcs/lcs_timer.h
     include/lcs/lcs_tsa.h
     include/lcs/lcs.h
-    include/ls_udp/IPv4ToLsUdp.h
+    #include/ls_udp/IPv4ToLsUdp.h
     include/persistence/IzotPersistentFlashDirect.h
     include/persistence/Persistent.h
 )
