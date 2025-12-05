@@ -91,8 +91,8 @@ Status LCS_Init(IzotResetCause cause)
         nmp = &nm[stackNum];
         snvt_capability_info = &capability_info;
         si_header_ext = &header_ext;
-        if (APPInit() == FAILURE) {
-			return FAILURE;
+        if (APPInit() == LS_FAILURE) {
+			return LS_FAILURE;
 		}
         // Compute the configCheckSum for the first time. NodeReset
         // will not verify checkSum firt time.
@@ -103,7 +103,7 @@ Status LCS_Init(IzotResetCause cause)
 		SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE); // Initial value
     }
 
-	return SUCCESS;
+	return LS_SUCCESS;
 }
 
 void LCS_Service()

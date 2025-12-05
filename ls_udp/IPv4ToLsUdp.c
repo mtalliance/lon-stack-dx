@@ -923,7 +923,7 @@ void LsUDPReset(void)
     gp->lkOutQCnt     = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NW_OUTBUF_CNT));
     queueItemSize    = gp->lkOutBufSize + sizeof(LKSendParam) + 21;
 
-    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt) != LS_SUCCESS) {
         DBG_vPrintf(TRUE, "LsUDPReset: Unable to init the output queue.\r\n");
         gp->resetOk = FALSE;
         return;
@@ -934,7 +934,7 @@ void LsUDPReset(void)
     gp->lkOutPriQCnt    = DecodeBufferCnt((IzotByte)IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NW_OUT_PRICNT));
     queueItemSize       = gp->lkOutPriBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != LS_SUCCESS) {
         DBG_vPrintf(TRUE, "LsUDPReset: Unable to init the priority output queue.\r\n");
         gp->resetOk = FALSE;
         return;

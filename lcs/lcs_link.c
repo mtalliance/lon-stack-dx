@@ -141,7 +141,7 @@ void LKReset(void)
     gp->lkOutQCnt    = DecodeBufferCnt((IzotUbits16)gp->nwOutQCnt);
     queueItemSize    = gp->lkOutBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= SUCCESS) {
+    if (QueueInit(&gp->lkOutQ, queueItemSize, gp->lkOutQCnt)!= LS_SUCCESS) {
         ErrorMsg("LKReset: Unable to init the output queue.\n");
         gp->resetOk = FALSE;
         return;
@@ -152,7 +152,7 @@ void LKReset(void)
     gp->lkOutPriQCnt = DecodeBufferCnt((IzotUbits16)gp->nwOutPriQCnt);
     queueItemSize = gp->lkOutPriBufSize + sizeof(LKSendParam);
 
-    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != SUCCESS) {
+    if (QueueInit(&gp->lkOutPriQ, queueItemSize, gp->lkOutPriQCnt) != LS_SUCCESS) {
         ErrorMsg("LKReset: Unable to initialize the priority output queue.\n");
         gp->resetOk = FALSE;
         return;

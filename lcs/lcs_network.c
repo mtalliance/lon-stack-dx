@@ -94,7 +94,7 @@ void   NWReset(void)
     queueItemSize     = gp->nwInBufSize + sizeof(NWReceiveParam);
 
 
-    if (QueueInit(&gp->nwInQ, queueItemSize, gp->nwInQCnt) != SUCCESS)
+    if (QueueInit(&gp->nwInQ, queueItemSize, gp->nwInQCnt) != LS_SUCCESS)
     {
         gp->resetOk = FALSE;
         return;
@@ -111,7 +111,7 @@ void   NWReset(void)
     }
 
     if (QueueInit(&gp->nwOutQ, queueItemSize, gp->nwOutQCnt)
-            != SUCCESS)
+            != LS_SUCCESS)
     {
         DBG_vPrintf(TRUE, "NWReset: Unable to init the output queue.\n");
         gp->resetOk = FALSE;
@@ -129,7 +129,7 @@ void   NWReset(void)
         return;
     }
 
-    if (QueueInit(&gp->nwOutPriQ, queueItemSize, gp->nwOutPriQCnt) != SUCCESS)
+    if (QueueInit(&gp->nwOutPriQ, queueItemSize, gp->nwOutPriQCnt) != LS_SUCCESS)
     {
         DBG_vPrintf(TRUE, "NWReset: Unable to init the priority output queue.\n");
         gp->resetOk = FALSE;
@@ -334,7 +334,7 @@ void   NWSend(void)
         npduPtr->data[1] = 1 << 7; /* SrcNode is 0. */
     }
 
-    if (EncodeDomainLength(nwSendParamPtr->destAddr.dmn.domainLen, &domainLength) == FAILURE)
+    if (EncodeDomainLength(nwSendParamPtr->destAddr.dmn.domainLen, &domainLength) == LS_FAILURE)
     {
         /* Protocol specification indicates that domainLength has to be
            one of the above values. If not, it is a bad value. */
@@ -867,7 +867,7 @@ Comments:
 *******************************************************************************/
 Status EncodeDomainLength(IzotByte lengthIn, IzotByte* pValue)
 {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     switch (lengthIn)
     {
     case 0:
@@ -883,7 +883,7 @@ Status EncodeDomainLength(IzotByte lengthIn, IzotByte* pValue)
         *pValue = 3;
         break;
     default:
-        sts = FAILURE;
+        sts = LS_FAILURE;
         break;
     }
     return sts;

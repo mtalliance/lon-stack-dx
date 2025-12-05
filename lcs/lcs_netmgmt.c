@@ -219,11 +219,11 @@ APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     if (msgType == NM_MESSAGE) {
         subCode = apduPtr->code.nm.nmCode;
-        code = (success == SUCCESS ? NM_resp_success : NM_resp_failure)
+        code = (success == LS_SUCCESS ? NM_resp_success : NM_resp_failure)
                 | subCode;
     } else {
         subCode = apduPtr->code.nd.ndCode;
-        code = (success == SUCCESS ? ND_resp_success : ND_resp_failure)
+        code = (success == LS_SUCCESS ? ND_resp_success : ND_resp_failure)
                 | subCode;
     }
     // Look for expanded commands.  
@@ -246,7 +246,7 @@ APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 void HandleNDQueryUnconfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     /* Check for proper size of the message */
     if (appReceiveParamPtr->pduSize != 2) {
-        NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -279,7 +279,7 @@ APDU *apduPtr) {
     /* Check for proper size of the message. Regular pdusize is 1 byte.
      If this fn is called due to proxy request, then it is 2 bytes. */
     if (appReceiveParamPtr->pduSize > 2) {
-        NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     } else if (appReceiveParamPtr->pduSize == 2) {
         /* Make sure it is a proxy request. Or else, length is wrong. */
@@ -287,7 +287,7 @@ APDU *apduPtr) {
                 == ND_PROXY_COMMAND && apduPtr->data[0] == 2) {
             ; /* It is indeed a proxy command. Length ok. Proceed. */
         } else {
-            NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
     }
@@ -310,7 +310,7 @@ APDU *apduPtr) {
  ******************************************************************************/
 void HandleNMUpdateDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     IzotDomain *p = NULL, *pDomain = NULL;
-    Status sts = FAILURE;
+    Status sts = LS_FAILURE;
     
     if (appReceiveParamPtr->pduSize >= 2 + sizeof(IzotDomain)) {
         p = AccessDomain(apduPtr->data[0]);
@@ -320,7 +320,7 @@ void HandleNMUpdateDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     }
     NMNDRespond(NM_MESSAGE, sts, appReceiveParamPtr, apduPtr);
         
-    if (sts == SUCCESS && apduPtr->data[0] == 0) 
+    if (sts == LS_SUCCESS && apduPtr->data[0] == 0) 
     {
         if (pDomain->Subnet != 0 && p->Subnet != pDomain->Subnet) 
         {
@@ -349,13 +349,13 @@ void HandleNMUpdateDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 void HandleNMLeaveDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     /* Fail if message is not 2 bytes long */
     if (appReceiveParamPtr->pduSize != 2) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* If the domain index is bad, fail */
     if (apduPtr->data[0] != 0 && apduPtr->data[0] != 1) {
         LCS_RecordError(IzotInvalidDomain);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* Leave the domain */
@@ -370,7 +370,7 @@ void HandleNMLeaveDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* If message not received on domain just left, then respond */
     if (apduPtr->data[0] != appReceiveParamPtr->srcAddr.dmn.domainIndex) {
-        NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
     }
 
     /* If not a member of any domain, go unconfigured and reset. */
@@ -394,13 +394,13 @@ void HandleNMUpdateKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Fail if message is not of correct length or domain index is bad. */
     if (appReceiveParamPtr->pduSize != 2 + IZOT_AUTHENTICATION_KEY_LENGTH) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     if (apduPtr->data[0] != 0 && apduPtr->data[0] != 1) {
 
         LCS_RecordError(IzotInvalidDomain);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -408,14 +408,14 @@ void HandleNMUpdateKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         eep->domainTable[apduPtr->data[0]].Key[i] += apduPtr->data[i + 1];
     }
     RecomputeChecksum();
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
  Purpose:   Handle incoming NM Update Address message.
  ******************************************************************************/
 void HandleNMUpdateAddr(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
-    Status sts = FAILURE;
+    Status sts = LS_FAILURE;
     uint32_t oldaddr = 0, newaddr;
     IzotByte removeFlag = 0;
     IzotUbits16 indexIn;
@@ -464,13 +464,13 @@ void HandleNMUpdateAddr(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
  ******************************************************************************/
 void HandleNMQueryAddr(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->pduSize < 2) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* Fail if the address table index is bad and set statistics. */
     if (apduPtr->data[0] >= eep->readOnlyData.Extended) {
         LCS_RecordError(IzotInvalidAddrTableIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* Send response */
@@ -494,13 +494,13 @@ void HandleNMQueryNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     
     /* Fail if the request does not have correct size */
     if (appReceiveParamPtr->pduSize != 2 && appReceiveParamPtr->pduSize != 4) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
     n = apduPtr->data[0];
     if (n == 255 && appReceiveParamPtr->pduSize != 4) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -518,7 +518,7 @@ void HandleNMQueryNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
             || (n >= nmp->nvTableSize && n < nmp->nvTableSize
                     + NV_ALIAS_TABLE_SIZE && (1 + sizeof(AliasStruct))
                     > gp->tsaRespBufSize)) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -572,12 +572,12 @@ void HandleNMNVFetch(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Check if the message has correct size. If not, fail. */
     if (appReceiveParamPtr->pduSize != 2 && appReceiveParamPtr->pduSize != 4) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     n = apduPtr->data[0];
     if (n == 255 && appReceiveParamPtr->pduSize != 4) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     tsaOutQPtr = &gp->tsaRespQ;
@@ -602,7 +602,7 @@ void HandleNMNVFetch(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (n < nmp->nvTableSize) {
         /* Make sure there is sufficient space for the response. Else, fail. */
         if (nmp->nvFixedTable[n].nvLength + i + 1 > gp->tsaRespBufSize) {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
 
@@ -614,7 +614,7 @@ void HandleNMNVFetch(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         EnQueue(tsaOutQPtr);
 
     } else {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     }
 }
 
@@ -636,7 +636,7 @@ void HandleNMQuerySIData(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Fail if message is not 4 bytes long */
     if (appReceiveParamPtr->pduSize != 4) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -646,7 +646,7 @@ void HandleNMQuerySIData(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     count = apduPtr->data[2];
     /* Check if we have enough space to respond for this message */
     if (count + 1 > gp->tsaRespBufSize) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -709,7 +709,7 @@ void HandleNMWink(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     }
 
     if (appReceiveParamPtr->pduSize > 5) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     
@@ -718,7 +718,7 @@ void HandleNMWink(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
             /* Any service except request/response */
             IzotWink(); /* Simple Wink */
         } else {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         }
         return;
     }
@@ -726,7 +726,7 @@ void HandleNMWink(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->pduSize == 5 || subcmd == 7) {
         if (appReceiveParamPtr->service != IzotServiceRequest) 
         {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
         
@@ -849,7 +849,7 @@ void HandleNmeQueryVersion(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
  Purpose:   Handle incoming NME Join Domain No Key
  *******************************************************************************/
 void HandleNmeUpdateDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
-    Status sts = FAILURE;
+    Status sts = LS_FAILURE;
     if (appReceiveParamPtr->pduSize >= 
     3 + sizeof(IzotDomain) - IZOT_AUTHENTICATION_KEY_LENGTH) {
         sts = UpdateDomain((IzotDomain *) &apduPtr->data[2],
@@ -871,10 +871,10 @@ void HandleNmeReportDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     } reportDomain;
 
     if (appReceiveParamPtr->pduSize < 3) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     } else if (p == NULL) {
         LCS_RecordError(IzotInvalidDomain);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     } else {
         reportDomain.subcommand = apduPtr->data[0];
         memcpy(&reportDomain.address, p, sizeof(reportDomain.address));
@@ -897,7 +897,7 @@ void HandleNmeReportKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     for (i = 0; i < 2; i++) {
         IzotDomain *p = AccessDomain(i);
         if (p == NULL) {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             break;
         }
         memcpy(&reportKey.key[i * IZOT_AUTHENTICATION_KEY_LENGTH], 
@@ -915,7 +915,7 @@ void HandleNmeReportKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
  Purpose:   Handle incoming NME Update Key
  *******************************************************************************/
 void HandleNmeUpdateKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
-    Status sts = FAILURE;
+    Status sts = LS_FAILURE;
     if (appReceiveParamPtr->pduSize >= 3 + OMA_KEY_LEN && AccessDomain(1)
             != NULL) {
         IzotByte i;
@@ -932,7 +932,7 @@ void HandleNmeUpdateKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
                 p->Key[j] += *pKey++;
             }
             sts = UpdateDomain(p, i, true);
-            if (sts == FAILURE) {
+            if (sts == LS_FAILURE) {
                 // This should never happen...
                 break;
             }
@@ -949,10 +949,10 @@ void HandleNmeUpdateKey(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 void HandleNmeInitConfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     int i;
     UInt16 selectorVal = 0x3FFF;
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
 
     if (appReceiveParamPtr->pduSize <= 2) {
-        sts = FAILURE;
+        sts = LS_FAILURE;
     } else {
         int len = apduPtr->data[1];
         IzotByte nvAuth = false;
@@ -996,7 +996,7 @@ void HandleNmeUpdateNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     IzotDatapointConfig    *np;
     if (appReceiveParamPtr->pduSize < 6)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
          return;
     }
 
@@ -1015,19 +1015,19 @@ void HandleNmeUpdateNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         else
         {
             /* Incorrect size */
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
              return;
         }
     } else
     {
     /* Invalid nv table index */
         LCS_RecordError(IzotInvalidDatapointIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
          return;
     }
     /* Recompute checksum and send response */
     RecomputeChecksum();
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -1046,7 +1046,7 @@ void HandleNmeQueryNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     /* Fail if the request does not have correct size */
     if ((appReceiveParamPtr->pduSize) != 4)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1057,7 +1057,7 @@ void HandleNmeQueryNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (n < nmp->nvTableSize && 
     (1 + sizeof(IzotDatapointConfig)) > gp->tsaRespBufSize )
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1073,7 +1073,7 @@ void HandleNmeQueryNvCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     else
     {
         LCS_RecordError(IzotInvalidDatapointIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     }
 }
 
@@ -1086,7 +1086,7 @@ void HandleNmeUpdateNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduP
         
     if (appReceiveParamPtr->pduSize < 10)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     
@@ -1106,7 +1106,7 @@ void HandleNmeUpdateNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduP
         else
         {
             /* Incorrect size */
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
     }
@@ -1114,12 +1114,12 @@ void HandleNmeUpdateNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduP
     {
         /* Invalid nv table index */
         LCS_RecordError(IzotInvalidDatapointIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* Recompute checksum and send response */
     RecomputeChecksum();
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -1138,7 +1138,7 @@ void HandleNmeQueryNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPt
     /* Fail if the request does not have correct size */
     if (appReceiveParamPtr->pduSize != 4)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1150,7 +1150,7 @@ void HandleNmeQueryNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPt
                 (1 + sizeof(IzotAliasConfig)) > gp->tsaRespBufSize )
     )
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     if (n < nmp->nvTableSize + NV_ALIAS_TABLE_SIZE)
@@ -1166,7 +1166,7 @@ void HandleNmeQueryNvAliasCnfg(APPReceiveParam *appReceiveParamPtr, APDU *apduPt
     else
     {
         LCS_RecordError(IzotInvalidDatapointIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     }
 }
 
@@ -1185,7 +1185,7 @@ void HandleNmeQueryLsAddrMapping(APPReceiveParam *appReceiveParamPtr, APDU *apdu
     /* Fail if the request does not have correct size */
     if ((appReceiveParamPtr->pduSize) != 2)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1211,7 +1211,7 @@ void HandleNmeQueryIpAddress(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     /* Fail if the request does not have correct size */
     if ((appReceiveParamPtr->pduSize) != 2)
     {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
      }
     
@@ -1224,7 +1224,7 @@ void HandleNmeQueryIpAddress(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     SendResponse(appReceiveParamPtr->reqId, NM_resp_success | NM_EXPANDED,
                 sizeof(reportIpAddress), (IzotByte*) &reportIpAddress);
 #else
-    NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
 #endif  // OS_IS(ETHERNET) || OS_IS(WIFI)
 }
 
@@ -1250,7 +1250,7 @@ void HandleNmeUpdateNvByIndex(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr
     if (appReceiveParamPtr->pduSize < 5) {
         // The message does not have any correct size or data field.
         LCS_RecordError(IzotDatapointMsgTooShort);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1358,7 +1358,7 @@ void HandleNmeUpdateNvByIndex(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr
 void HandleNMExpanded(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->pduSize < 2) {
         // All expanded commands must at least include a sub-command
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
     } else {
         switch (apduPtr->data[0]) {
         case NME_QUERY_VERSION:
@@ -1470,7 +1470,7 @@ void HandleNMExpanded(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 			break;
 #endif
         default:
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             break;
         }
     }
@@ -1495,7 +1495,7 @@ void HandleNMQueryId(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Fail if message does not have the correct size. Should be 2 or 6+n */
     if (appReceiveParamPtr->pduSize != 2 && appReceiveParamPtr->pduSize < 6) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1522,7 +1522,7 @@ void HandleNMQueryId(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->pduSize > 2 && appReceiveParamPtr->pduSize != (6
             + pid->count)) {
         /* The message does not have sufficient data or it has too much data. */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1630,12 +1630,12 @@ APDU *apduPtr) {
     if (appReceiveParamPtr->srcAddr.addressMode != AM_MULTICAST
             || appReceiveParamPtr->srcAddr.dmn.domainIndex == FLEX_DOMAIN) {
         /* This message should be sent in AM_MULTICAST. Fail */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     if (appReceiveParamPtr->pduSize != 1 + sizeof(IzotAddress)) {
         /* Incorrect size */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* For accessing the corresponding address table entry,
@@ -1653,7 +1653,7 @@ APDU *apduPtr) {
     /* Make sure we got a good index. */
     if (IZOT_GET_ATTRIBUTE_P(groupStrPtr, IZOT_ADDRESS_GROUP_TYPE) != 
     1 || addrIndex == 0xFF) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     ap = AccessAddress(addrIndex); /* ap cannot be NULL */
@@ -1669,7 +1669,7 @@ APDU *apduPtr) {
     IZOT_SET_ATTRIBUTE(ap->Group, IZOT_ADDRESS_GROUP_TRANSMIT_TIMER, 
     IZOT_GET_ATTRIBUTE_P(groupStrPtr, IZOT_ADDRESS_GROUP_TRANSMIT_TIMER));
     RecomputeChecksum();
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -1684,7 +1684,7 @@ void HandleNMQueryDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Fail if message does not have the correct size. */
     if (appReceiveParamPtr->pduSize != 2) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1693,7 +1693,7 @@ void HandleNMQueryDomain(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (p == NULL) {
         /* Domain index is bad. */
         LCS_RecordError(IzotInvalidDomain);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
     /* Send response */
@@ -1711,7 +1711,7 @@ void HandleNMUpdateNvConfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) 
     NVStruct *np;
 
     if (appReceiveParamPtr->pduSize < 5) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1748,7 +1748,7 @@ void HandleNMUpdateNvConfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) 
             IZOT_SET_ATTRIBUTE(eep->nvConfigTable[n], IZOT_DATAPOINT_AES, 0x0);
         } else {
             /* Incorrect size */
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
     } else if (n < nmp->nvTableSize + NV_ALIAS_TABLE_SIZE) {
@@ -1770,19 +1770,19 @@ void HandleNMUpdateNvConfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) 
             eep->nvAliasTable[n].Primary = (IzotUbits16)(((AliasStruct *)np)->primary);
         } else {
             /* Incorrect size */
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
     } else {
         /* Invalid nv table index */
         LCS_RecordError(IzotInvalidDatapointIndex);
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
     /* Recompute checksum and send response */
     RecomputeChecksum();
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -1822,7 +1822,7 @@ void HandleNMUpdateNvConfig(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) 
 void HandleNMSetNodeMode(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->pduSize < 2 || (apduPtr->data[0] == 3
             && appReceiveParamPtr->pduSize < 3)) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -1847,7 +1847,7 @@ void HandleNMSetNodeMode(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     case 3: /* Change State */
         /* Fail if message is not 3 bytes long. */
         if (appReceiveParamPtr->pduSize != 3) {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             break;
         }
         if ((IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE) & 
@@ -1857,7 +1857,7 @@ void HandleNMSetNodeMode(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
             // Did we have a switchover failure?
             if (gp->nvm.downloadState.switchoverFailure) {
                 // Yes, fail the download.
-                NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+                NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
                 break;
             }
         }
@@ -1874,7 +1874,7 @@ void HandleNMSetNodeMode(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         }
         RecomputeChecksum();
         /* Respond with success if the message was a request. */
-        NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
         break;
 	case 6: /* New Physical Reset Sub Command */
 		PhysicalResetRequested();
@@ -1908,7 +1908,7 @@ void HandleNMReadMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     if (appReceiveParamPtr->pduSize < 5 || apduPtr->data[3]
             > gp->tsaRespBufSize) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2023,7 +2023,7 @@ void HandleNMReadMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
  *******************************************************************************/
 void HandleNMChecksumRecalc(APPReceiveParam *appReceiveParamPtr, 
 APDU *apduPtr) {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     // Re-config checksum.
     RecomputeChecksum();
 
@@ -2045,7 +2045,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     /* Fail if message is not at least 6 bytes long */
     if (appReceiveParamPtr->pduSize < 6) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2058,7 +2058,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
      Allow that. Note that the code takes one byte. */
     if (appReceiveParamPtr->pduSize != 6 + pr->count
             && appReceiveParamPtr->pduSize != 17) {
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2077,11 +2077,11 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
                     gp->resetNode = TRUE;
                     nmp->resetCause = IzotSoftwareReset;
                 }
-                NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+                NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
             }
             else
             {
-                NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+                NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             }
             return;
         } else
@@ -2104,7 +2104,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         break;
     default:
         /* Invalid Mode */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2118,7 +2118,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (!allowed) {
 
         /* Send failure response if the message was a request */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2140,7 +2140,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
         if (!allowed) {
             /* Send failure response if the message was a request */
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             return;
         }
     }
@@ -2160,7 +2160,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         nmp->resetCause = IzotSoftwareReset;
     }
 
-    NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -2173,7 +2173,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 void HandleProxyResponse(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     if (appReceiveParamPtr->proxyDone || SendResponse(appReceiveParamPtr->tag,
             apduPtr->code.allBits, appReceiveParamPtr->pduSize - 1,
-            apduPtr->data) == SUCCESS) {
+            apduPtr->data) == LS_SUCCESS) {
         DeQueue(&gp->appCeRspInQ);
     }
 }
@@ -2196,14 +2196,14 @@ void HandleNDQueryStatus(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr,
     if (((apduPtr->code.allBits & 0x0F) == ND_QUERY_STATUS)
             && appReceiveParamPtr->pduSize != 1) {
         /* Incorrect size. Fail. */
-        NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
     if (((apduPtr->code.allBits & 0x0F) == ND_PROXY_COMMAND)
             && appReceiveParamPtr->pduSize != 2) {
         /* Incorrect size. Fail. */
-        NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return;
     }
 
@@ -2253,7 +2253,7 @@ void HandleNDQueryStatus(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr,
  *******************************************************************************/
 Status HandleNDProxyCommand(APPReceiveParam *appReceiveParamPtr, 
 APDU *apduPtr) {
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     Queue *tsaOutQPtr;
     TSASendParam *tsaSendParamPtr;
     APDU *apduSendPtr;
@@ -2277,7 +2277,7 @@ APDU *apduPtr) {
             break;
         default:
             /* Invalid sub_command. Send failure response */
-            NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         }
         return sts;
     }
@@ -2291,7 +2291,7 @@ APDU *apduPtr) {
             || (apduPtr->data[1] != AM_UNIQUE_NODE_ID
                     && appReceiveParamPtr->pduSize != (2
                             + sizeof(IzotAddress)))) {
-        NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         return sts;
     }
 
@@ -2305,7 +2305,7 @@ APDU *apduPtr) {
     /* Check if the target queue has space for forwarding this request. */
     if (QueueFull(tsaOutQPtr)) {
         // Failure indicates we didn't process the message so don't free it!
-        return FAILURE;
+        return LS_FAILURE;
     }
 
     /* Generate request message */
@@ -2369,7 +2369,7 @@ void HandleNDClearStatus(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     gp->clearStatsCallback();
     
     /* NMNDRespond will send response only if the msg is IzotServiceRequest */
-    NMNDRespond(ND_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+    NMNDRespond(ND_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
 }
 
 /*******************************************************************************
@@ -2420,7 +2420,7 @@ APDU *apduPtr) {
  *******************************************************************************/
 void HandleND(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     memcpy(&save, eep, sizeof(save));
-    Status sts = SUCCESS;
+    Status sts = LS_SUCCESS;
     /* It is not legal for a response to be an ND command */
     if (appReceiveParamPtr->service != IzotServiceResponse) {
         /* If network diagnostics messages need authentication
@@ -2435,7 +2435,7 @@ void HandleND(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
                 != ND_QUERY_XCVR_BIDIR && apduPtr->code.nd.ndCode
                 != ND_GET_FULL_VERSION)) {
             LCS_RecordError(IzotAuthenticationMismatch);
-            NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         } else {
             /* Handle various network diagnostic message codes */
             switch (apduPtr->code.nd.ndCode) {
@@ -2462,7 +2462,7 @@ void HandleND(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
                 break;
             default:
                 /* Discard unrecognized diagnostic command */
-                NMNDRespond(ND_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+                NMNDRespond(ND_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
                 break;
             }
         }
@@ -2473,7 +2473,7 @@ void HandleND(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         LCS_WriteNvm();
     }
 
-    if (sts == SUCCESS) {
+    if (sts == LS_SUCCESS) {
         // Proxy may not actually process the message 
         // so we don't dequeue in that case
         DeQueue(&gp->appInQ);
@@ -2516,7 +2516,7 @@ void HandleNM(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
     ))) 
 		{
             LCS_RecordError(IzotAuthenticationMismatch);
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
             DeQueue(&gp->appInQ);
             return;
         }
@@ -2534,10 +2534,10 @@ void HandleNM(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         /* Fail if message is not 2 bytes long or the byte is bad. */
         if (appReceiveParamPtr->pduSize != 2 || (apduPtr->data[0] != 0
                 && apduPtr->data[0] != 1)) {
-            NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         } else {
             gp->selectQueryFlag = apduPtr->data[0];
-            NMNDRespond(NM_MESSAGE, SUCCESS, appReceiveParamPtr, apduPtr);
+            NMNDRespond(NM_MESSAGE, LS_SUCCESS, appReceiveParamPtr, apduPtr);
         }
         break;
     case NM_UPDATE_DOMAIN:
@@ -2599,7 +2599,7 @@ void HandleNM(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         /* This is where any message that is not taken care of should be
          handled. An example is product query command. For now, we treat
          everything else as unrecognized network management message. */
-        NMNDRespond(NM_MESSAGE, FAILURE, appReceiveParamPtr, apduPtr);
+        NMNDRespond(NM_MESSAGE, LS_FAILURE, appReceiveParamPtr, apduPtr);
         break;
     }
 
