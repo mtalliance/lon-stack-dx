@@ -127,9 +127,10 @@
 
 // Operating System IDs -- default is Linux
 #define OS_ID_LINUX             0   // Linux or POSIX-compliant OS
-#define OS_ID_FREERTOS          1   // FreeRTOS
-#define OS_ID_WINDOWS           2   // Windows
-#define OS_ID_BARE_METAL        3   // No OS, bare metal
+#define OS_ID_LINUX_KERNEL      1   // Linux Kernel
+#define OS_ID_FREERTOS          2   // FreeRTOS
+#define OS_ID_WINDOWS           3   // Windows
+#define OS_ID_BARE_METAL        4   // No OS, bare metal
 
 // Processor IDs -- default is ARM64
 #define PROCESSOR_ID_ARM64      0   // 64-bit ARM
@@ -158,10 +159,6 @@
 #define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
 #define LINK_ID     LINK_ID_USB
 #define PROTOCOL_ID PROTOCOL_ID_LON_NATIVE
-#define ISI_ID      ISI_ID_NO_ISI
-#define IUP_ID      IUP_ID_NO_IUP
-#define PRODUCT_ID 	  PRODUCT_ID_NA
-#define SECURITY_ID   SECURITY_ID_V1
 
 typedef uint32_t (*ptrU32_Callback_V)();
 extern ptrU32_Callback_V os_ticks_get;

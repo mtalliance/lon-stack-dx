@@ -1,16 +1,15 @@
 /*
  * lcs_link.h
  *
- * Copyright (c) 2022-2025 EnOcean
+ * Copyright (c) 2022-2026 EnOcean
  * SPDX-License-Identifier: MIT
  * See LICENSE file for details.
  * 
  * Title:   LON Stack Data Link Layer for LON USB and MIP Data Links
- * Purpose: Implements layer 2 (data link layer) of the ISO/IEC 14908-1
- *          LON protocol stack.
+ * Purpose: Implements the LON data link layer (Layer 2) of the 
+ *          ISO/IEC 14908-1 LON protocol stack.
  * Notes:   The functions in this file support LON data links using a
- *          LON USB network interface such as the U10 or U60, on a Neuron
- *          processor with MIP firmware.
+ *          LON USB network interface such as the U10 or U60.
  */
 
 #ifndef _LINK_H
@@ -20,14 +19,19 @@
 #include "izot/IzotApi.h"
 #include "lcs/lcs_timer.h"
 #include "lcs/lcs_node.h"
-#include "abstraction/vldv.h"
 
 typedef short LonLinkHandle;
+
+typedef struct {
+	IzotByte cmd;
+	IzotByte len;
+	IzotByte pdu[MAX_PDU_SIZE];
+} L2Frame;
 
 /*****************************************************************
  * Section: Function Declarations
  *****************************************************************/
-void LKReset(void);
+LonStatusCode LKReset(void);
 void LKSend(void);
 void LKReceive(void);
 #endif

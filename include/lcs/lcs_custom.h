@@ -1,65 +1,51 @@
-// Copyright (C) 2022 EnOcean
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
-// this software and associated documentation files (the "Software"), to deal in 
-// the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to do
-// so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+/*
+ * lcs_custom.h
+ *
+ * Copyright (c) 2022-2026 EnOcean
+ * SPDX-License-Identifier: MIT
+ * See LICENSE file for details.
+ * 
+ * Title:   LON Stack Customization Constants and Global Data
+ * Purpose: Provides constant definitions and a global data structure
+ *          to customize the LON Stack for a specific device.
+ * Notes:   This file can be modified to customize the LON Stack
+ *          for a specific device.  The constants defined in this
+ *          file can be changed to set default values for
+ *          ReadOnlyData, ConfigData, Domain Table, and Address Table
+ *          members.  The global data structure 'customDataGbl' can be
+ *          used to hold any implementation-specific values.
+ * 
+ *          Some or all of these values will be overwritten by
+ *          network management tools when this device is loaded.
+ * 
+ *          See ISO/IEC 14908-1 for details on the LON protocol parameters.
+ */
 
-/*********************************************************************
-  File:           lcs_custom.h
-
-  References:     ISO/IEC 14908-1
-
-  Purpose:        Contains constant definitions that can be
-                  used to customize the characteristics of the
-                  node running the LON DX Stack.
-*********************************************************************/
 #ifndef _LCS_CUSTOM_H
 #define _LCS_CUSTOM_H
 
-/*------------------------------------------------------------------------------
- Section: Includes
- ------------------------------------------------------------------------------*/
 #include <stddef.h>
 #include "izot/IzotPlatform.h"
-#include "izot/IzotTypes.h"
-// #include "lcs/lcs_eia709_1.h" 
+#include "izot/lon_types.h"
 
-/*------------------------------------------------------------------------------
-  Section: Constant Definitions
-  ------------------------------------------------------------------------------*/
-/* ReadOnlyData. Reference: Tech Device Data Book. Revision 3. p.9-6 */
-#define MODEL_NUM             MODEL_NUMBER
-#define MINOR_MODEL_NUM       0
+/* Read only data */
+#define ARCHITECTURE_NUM      ARCHITECTURE_NUMBER
+#define MINOR_ARCH_NUM        0
 #define READ_WRITE_PROTECT    0
-#define RUN_WHEN_UNCONF       0 /* Set to 1 if applicaiton needs to run
-even if the node is unconfigured */
-
+#define RUN_WHEN_UNCONF       0 /* Set to 1 to run the application when the device is unconfigured */
 
 /*********************************************************************
     Warning!!! The following constants are encoded. So, don't use the
     actual values
 *********************************************************************/
-#define LCS_BUF_SIZE		 12		// This is the encoded byte count
+#define LCS_BUF_SIZE		 12		// Encoded byte count
 #define APP_OUT_BUF_SIZE     0
 #define APP_IN_BUF_SIZE      0
 #define RECV_REC_APDU_SIZE   LCS_BUF_SIZE
 #define NW_OUT_BUF_SIZE      0
 #define NW_IN_BUF_SIZE       0
 #define LK_OUT_BUF_SIZE      LCS_BUF_SIZE
+#define LK_IN_BUF_SIZE       0
 #define LK_SEND_BUF_SIZE     0
 #define LK_RECEIVE_BUF_SIZE  0
 #define CAL_RECEIVE_BUF_SIZE 0
@@ -78,11 +64,15 @@ even if the node is unconfigured */
 #define NW_OUT_PRI_Q_CNT      2
 #define NW_IN_Q_CNT           3
 
+#define LK_IN_Q_CNT           3
+#define LK_OUT_PRI_Q_CNT      2
+#define LK_OUT_Q_CNT          3
+
 #define NGTIMER_SPCL_VAL   8192
 
 #define NON_GROUP_TIMER 8
 
-/* If the node is a member of group A(say), then typical 709.1 applications
+/* If the node is a member of group A(say), then typical LON applications
     set group size to 1 more than actual group size if node is not
     a member of group A. This is done so that the number of
     acknowledgements to be expected is always (groupsize - 1).
@@ -103,27 +93,22 @@ even if the node is unconfigured */
     timer value in all target nodes. */
 #define TS_RESET_DELAY_TIME 2000
 
-
-/*******************************************************************************
- Section: Type Definitions
- *******************************************************************************/
-typedef IzotByte DomainId[DOMAIN_ID_LEN];
-typedef IzotByte AuthKey[AUTH_KEY_LEN];
+typedef IzotByte DomainId[IZOT_DOMAIN_ID_MAX_LENGTH];
+typedef IzotByte AuthKey[IZOT_AUTHENTICATION_KEY_LENGTH];
 
 /* Other values that can be initialized are in the following structure.
    The actual values are given in custom.c file. */
-typedef struct
-{
+typedef struct {
     /* ReadOnlyData Members */
     IzotUniqueId  UniqueNodeId;
     IzotByte twoDomains;
 	IzotByte addressCnt;
-    char progId[ID_STR_LEN];
+    char progId[IZOT_PROGRAM_ID_LENGTH];
 
 	char* szSelfDoc;
 	
     /* ConfigData Members */
-    char location[LOCATION_LEN];
+    char location[IZOT_LOCATION_LENGTH];
 
     /* Domain Table Members */
     DomainId domainId[MAX_DOMAINS];

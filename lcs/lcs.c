@@ -1,44 +1,25 @@
-//
-// lcs.c
-//
-// Copyright (C) 2022-2025 EnOcean
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
-// this software and associated documentation files (the "Software"), to deal in 
-// the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to do
-// so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-//
-// LON DX Stack main entry points
-//
-
-//
-// Any app using LCS must do the following:
-// 1. Call LCS_Init() during initialization
-// 2. Call LCS_Service() as often as practical (e.g., once per millisecond)
-//
+/*
+ * lcs.c
+ *
+ * Copyright (c) 2022-2026 EnOcean
+ * SPDX-License-Identifier: MIT
+ * See LICENSE file for details.
+ * 
+ * Title:   LON Stack Core Services
+ * Purpose: Provides the main initialization and service functions for
+ *          LON Stack DX.
+ * Notes:   All applications using LON Stack DX must call LCS_Init()
+ *          during initialization and LCS_Service() as often as practical
+ * 			(e.g., once per millisecond).
+ */
 
 #include "lcs/lcs.h"
-//#include "lcs/lcs_link.h"
+#include "izot/IzotApi.h"
 
+// LON Stack DX initialization
+extern LonStatusCode APPInit(void); // Init function for application layer
 
-// Application init functions
-extern Status APPInit(void); // Init function for application layer
-
-// Send functions for the layers
+// Send functions for the LON Stack layers
 extern void APPSend(void);
 extern void TPSend(void);
 extern void SNSend(void);
@@ -51,7 +32,7 @@ extern void LsUDPSend(void);
 extern void LKSend(void);
 #endif // LINK_IS(USB) || LINK_IS(MIP)
 
-// Receive functions for the layers
+// Receive functions for the LON Stack DX layers
 extern void APPReceive(void);
 extern void TPReceive(void);
 extern void SNReceive(void);
@@ -64,14 +45,25 @@ extern void LsUDPReceive(void);
 extern void LKReceive(void);
 #endif // LINK_IS(USB) || LINK_IS(MIP)
 
-extern void IzotOffline(void);
-
 #define LED_TIMER_VALUE      2000  // How often to flash in ms
-#define CHECKSUM_TIMER_VALUE 1000  // How often to check config checksum?
+#define CHECKSUM_TIMER_VALUE 1000  // How often to check config checksum in ms
 
-Status LCS_Init(IzotResetCause cause)
+/*
+ * Provides the main initialization functions for LON Stack.
+ * Parameters:
+ *   cause: The reset cause
+ * Returns:
+ *   LonStatusNoError if successful, LonStatusCode error code otherwise.
+ * Notes:
+ *   This function must be called once during system initialization.
+ */
+LonStatusCode LCS_Init(IzotResetCause cause)
 {
     IzotByte   stackNum;
+
+#if LINK_IS(WIFI)
+    UnlockWiFiDevice();
+#endif  // LINK_IS(WIFI)
 
     // First init EEPROM based on custom.h, custom.c and default
     // values for several variables
@@ -81,33 +73,46 @@ Status LCS_Init(IzotResetCause cause)
         gp = &protocolStackDataGbl[stackNum];
         snvt_capability_info = &capability_info;
         si_header_ext = &header_ext;
-	    InitEEPROM(IzotGetAppSignature());
+	    if (InitEEPROM(IzotGetAppSignature()) != LonStatusNoError) {
+			OsalPrintError(LonStatusStackInitializationFailure, "LCS_Init: Non-volatile data initialization failed for stack %d", stackNum);
+            return LonStatusStackInitializationFailure;
+        }
     }
 
-    // Reset the node at the start
+    // Reset the LON device at the start
     for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
         gp = &protocolStackDataGbl[stackNum];
         eep = &eeprom[stackNum];
         nmp = &nm[stackNum];
         snvt_capability_info = &capability_info;
         si_header_ext = &header_ext;
-        if (APPInit() == LS_FAILURE) {
-			return LS_FAILURE;
+        if (APPInit() != LonStatusNoError) {
+			OsalPrintError(LonStatusStackInitializationFailure, "LCS_Init: Application initialization failed for stack %d", stackNum);
+			return LonStatusStackInitializationFailure;
 		}
-        // Compute the configCheckSum for the first time. NodeReset
-        // will not verify checkSum firt time.
+        // Compute the configCheckSum for the first time; NodeReset
+        // will not verify checkSum first time
         eep->configCheckSum   = ComputeConfigCheckSum();
 		nmp->resetCause		  = cause;
 
 	    SetLonTimer(&gp->ledTimer, LED_TIMER_VALUE);
 		SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE); // Initial value
     }
-
-	return LS_SUCCESS;
+	OsalPrintDebug(LonStatusNoError, "LCS_Init: LON Stack initialization completed successfully");
+	return LonStatusNoError;
 }
 
-void LCS_Service()
+/*
+ * Provides the main service function for LON Stack.
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusCode error code otherwise.
+ * Notes:
+ *   This function must be called as often as practical (e.g., once
+ *   per millisecond) to allow LON Stack to perform its processing.
+ */
+LonStatusCode LCS_Service()
 {
+	LonStatusCode status = LonStatusNoError;
 	int stackNum;
     for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
 		gp  = &protocolStackDataGbl[stackNum];
@@ -119,9 +124,10 @@ void LCS_Service()
 		// Check if the node needs to be reset.
 		if (gp->resetNode) {
 			gp->resetOk = TRUE;
-			NodeReset(FALSE);
-			if (!gp->resetOk) {
-				return;
+			status = NodeReset(FALSE);
+			if (!LON_SUCCESS(status) || !gp->resetOk) {
+				OsalPrintError(status, "LCS_Service: LON application reset failed for stack %d", stackNum);
+				return status;
 			}
 			continue; // Easy way to do scheduler reset,
 		}
@@ -182,17 +188,18 @@ void LCS_Service()
 		if (LonTimerExpired(&gp->checksumTimer)) {
 			if (!NodeUnConfigured() &&
 					eep->configCheckSum != ComputeConfigCheckSum()) {
-				DBG_vPrintf(TRUE, "\n: +++++++++++  LCS RESET +++++++++++++");
 				// Go unconfigured and reset.
-				IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE, 
-                IzotApplicationUnconfig);
+				IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE, IzotApplicationUnconfig);
 				gp->appPgmMode  = ON_LINE;
 				IzotOffline();  // Indicate to application program.
 				gp->resetNode = TRUE;
 				nmp->resetCause = IzotSoftwareReset;
-				LCS_RecordError(IzotCnfgCheckSumError);
+				// Report but don't return a checksum error to enable reset to proceed
+				OsalPrintError(LonStatusCnfgChecksumError, 
+						"LCS_Service: Configuration checksum error detected, resetting");
 			}
 			SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE);
 		}
 	}
+	return status;
 }

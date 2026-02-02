@@ -1,64 +1,40 @@
-//
-// lcs_node.c
-//
-// Copyright (C) 2022-2025 EnOcean
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
-// this software and associated documentation files (the "Software"), to deal in 
-// the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to do
-// so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+/*
+ * lcs_node.c
+ *
+ * Copyright (c) 2022-2026 EnOcean
+ * SPDX-License-Identifier: MIT
+ * See LICENSE file for details.
+ * 
+ * Title:   LON Stack Configuration Data Structures and Type Definitions
+ * Purpose: Defines configuration data structures and other type definitions
+ *          required by the LON Stack upper layers and provides interface
+ *          functions to access some of the data structures.
+ * Notes:   See ISO/IEC 14908-1 for LON protocol details.
+ * 
+ *          The LON Stack supports multiple LON stack instances on the same
+ *          host. Each stack has its own configuration and runtime data
+ *          structures.  ProtocolStackData is a global structure defined in
+ *          lcs/lcs_node.h.  An array of ProtocolStackData structures is
+ *          used so that each stack has its own data that it works on. The
+ *          LON stack scheduler assign the selected ProtocolStackData structure
+ *          to a global pointer named gp for the current LON stack instance
+ *          before the stack code is executed. The number of stack instances
+ *          is defined by the constant NUM_STACKS in IzotPlatform.h.  The
+ *          default is 1.  Each stack instance has its own copy of the NmMap
+ *          structure that holds the runtime data for the network management 
+ *          layer. The support for multiple-stacks does not include support
+ *          for the MAC layer to handle multiple stacks or multiple application
+ *          programs. A true multi-stack system needs some extra coding.
+ */
 
-/*******************************************************************************
-     Reference:  ISO/IEC 14908-1
-
-       Purpose:  Configuration data strutures and type definitions.
-
-          Note:  The LON DX Stack supports any number of stacks.
-                 A global structure called ProtocolStackData
-                 is defined in node.h. An array of such
-                 structures is used so that each stack has
-                 its own data that it works on. A global
-                 pointer gp points to the right structure
-                 before the stack code is executed. This
-                 is done by the scheduler.
-
-                 The support for multiple-stacks does not include support
-                 for mac layer to handle multiple stacks or multiple application
-                 programs. A true multi-stack system needs some extra coding.
-*******************************************************************************/
-
-/*------------------------------------------------------------------------------
-  Section: Includes
-  ------------------------------------------------------------------------------*/
 #include "lcs/lcs_node.h"
 
-/*-------------------------------------------------------------------
-  Section: Constant Definitions
-  -------------------------------------------------------------------*/
-static const Dimensions dimensions =
-{
+static const Dimensions dimensions = {
     MAX_DOMAINS,
     NUM_ADDR_TBL_ENTRIES,
     NV_TABLE_SIZE,
     NV_ALIAS_TABLE_SIZE
 };
-
-/*-------------------------------------------------------------------
-  Section: Type Definitions
-  -------------------------------------------------------------------*/
 
 /*-------------------------------------------------------------------
   Section: Globals
@@ -92,17 +68,13 @@ static const IzotUbits16 rcvTimerCodeLGbl[16] =
 static IzotBool do_reset = FALSE;
 
 /*-------------------------------------------------------------------
-Section: Function Prototypes
--------------------------------------------------------------------*/
-
-/*-------------------------------------------------------------------
 Section: Function Definitions
 -------------------------------------------------------------------*/
 
 /*****************************************************************
 Function:  AccessDomain
 Returns:   Address of structure corresponding to given index
-Purpose:   To return the address of the structure that has domain
+Purpose:   Returns the address of the structure that has domain
            information for this node
 Comments:  If an invalid index is given, log error message.
 ******************************************************************/
@@ -110,27 +82,35 @@ Comments:  If an invalid index is given, log error message.
 IzotDomain *AccessDomain(IzotByte indexIn)
 {
     if (indexIn <= IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_TWO_DOMAINS)) {
-        return(&eep->domainTable[indexIn]);
+        IzotDomain *domain_config = &eep->domainTable[indexIn];
+        OsalPrintDebug(LonStatusNoError, "AccessDomain: Domain %x%x%x%x%x%x, Subnet %d, NonClone %d, Node %d, Invalid %d, Length %d, Key %x", 
+                domain_config->Id[0],domain_config->Id[1],domain_config->Id[2],domain_config->Id[3],domain_config->Id[4],domain_config->Id[5],domain_config->Subnet, 
+                IZOT_GET_ATTRIBUTE_P(domain_config,IZOT_DOMAIN_NONCLONE),
+                IZOT_GET_ATTRIBUTE_P(domain_config,IZOT_DOMAIN_NODE),
+                IZOT_GET_ATTRIBUTE_P(domain_config,IZOT_DOMAIN_INVALID),
+                IZOT_GET_ATTRIBUTE_P(domain_config,IZOT_DOMAIN_ID_LENGTH), domain_config->Key[0]);
+        return(domain_config);
     }
+    OsalPrintError(LonStatusInvalidDomain, "AccessDomain: Invalid domain index");
     return(NULL);
 }
 
 /*****************************************************************
 Function:  UpdateDomain
-Returns:   Status
-Purpose:   To Change the domain table entry with given structure.
+Returns:   <LonStatusCode> status
+Purpose:   Changes the domain table entry with given structure.
 Comments:  If an invalid index is given, log error message.
 ******************************************************************/
-Status UpdateDomain(const IzotDomain *domainInp, IzotByte indexIn, 
+LonStatusCode UpdateDomain(const IzotDomain *domainInp, IzotByte indexIn, 
 IzotByte includeKey)
 {
-    Status sts = LS_SUCCESS;
+    LonStatusCode sts = LonStatusNoError;
     int nDomains = IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_TWO_DOMAINS) ? MAX_DOMAINS : 1;
     if (indexIn < nDomains) {
         memcpy(&eep->domainTable[indexIn], domainInp, includeKey ? sizeof(IzotDomain) : 
         sizeof(IzotDomain) - IZOT_AUTHENTICATION_KEY_LENGTH);
     } else {
-        sts = LS_FAILURE;
+        sts = LonStatusInvalidDomain;
     }
     return sts;
 }
@@ -139,7 +119,7 @@ IzotByte includeKey)
 Function:  AccessAddress
 Returns:   Address of structure at given index
 Reference: Tech Device Data Book Rev 1 p.9-12
-Purpose:   To access address table entry
+Purpose:   Accesses address table entry
 Comments:  None
 ******************************************************************/
 IzotAddress *AccessAddress(IzotUbits16 indexIn)
@@ -152,20 +132,19 @@ IzotAddress *AccessAddress(IzotUbits16 indexIn)
 
 /*****************************************************************
 Function:  UpdateAddress
-Returns:   Status
+Returns:   <LonStatusCode> status
 Reference: Tech Device Data Rev 1 p.9-12
-Purpose:   To update an address table entry.
-Comments:  None
+Purpose:   Updates an address table entry.
 ******************************************************************/
-Status UpdateAddress(const IzotAddress *addrEntryInp, IzotUbits16 indexIn)
+LonStatusCode UpdateAddress(const IzotAddress *addrEntryInp, IzotUbits16 indexIn)
 {
-    Status sts = LS_SUCCESS;
+    LonStatusCode sts = LonStatusNoError;
 
     if (indexIn < eep->readOnlyData.Extended) {
         eep->addrTable[indexIn] = *addrEntryInp;
     } else {
-        LCS_RecordError(IzotInvalidAddrTableIndex);
-        sts = LS_FAILURE;
+        OsalPrintError(LonStatusInvalidAddrTableIndex, "UpdateAddress: Invalid address table index");
+        sts = LonStatusInvalidAddrTableIndex;
     }
 
     return sts;
@@ -175,7 +154,7 @@ Status UpdateAddress(const IzotAddress *addrEntryInp, IzotUbits16 indexIn)
 Function:  IsGroupMember
 Returns:   TRUE if this node belongs to given group. FALSE, else.
 Reference: None
-Purpose:   To check if a node belongs to a given group in the
+Purpose:   Checks if a node belongs to a given group in the
            given domain. If it does, also get the member number.
 Comments:  If groupMemberOut is NULL, then it is not used.
 ******************************************************************/
@@ -184,8 +163,7 @@ IzotByte IsGroupMember(IzotByte domainIndexIn, IzotByte groupIn,
 {
     IzotUbits16 i;
 
-    for (i = 0; i < NUM_ADDR_TBL_ENTRIES; i++)
-    {
+    for (i = 0; i < NUM_ADDR_TBL_ENTRIES; i++) {
         if (IZOT_GET_ATTRIBUTE(eep->addrTable[i].Group, IZOT_ADDRESS_GROUP_TYPE) == 1) {
 
             /* Group Format */
@@ -209,9 +187,8 @@ Function:  AddrTableIndex
 Returns:   The index of the address table for the given domain
            and group. 0xFF if not found.
 Reference: None
-Purpose:   To get the addr table index for a given group and domain.
+Purpose:   Gets the addr table index for a given group and domain.
            If there is no such entry in the addr table, return 0xff.
-Comments:  None
 ******************************************************************/
 IzotUbits16 AddrTableIndex(IzotByte domainIndexIn, IzotByte groupIn)
 {
@@ -230,81 +207,85 @@ IzotUbits16 AddrTableIndex(IzotByte domainIndexIn, IzotByte groupIn)
     return(0xFF); /* Not Found */
 }
 
-
-/*****************************************************************
-Function:  DecodeBufferSize
-Returns:   Actual Buffer Size
-Reference: Tech Device Data Rev 1 p9-9
-Purpose:   To compute the actual buffer size from code
-Comments:  None
-******************************************************************/
-IzotUbits16  DecodeBufferSize(IzotByte bufSizeIn)
+/*
+ * Decodes a buffer size code to the actual buffer size in bytes.
+ * Parameters:
+ *   bufSizeIn: The buffer size code to decode
+ *   decodedSizeOut: Pointer to variable to receive the decoded size
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusInvalidBufferSize if the
+ *   input code is invalid
+ */
+LonStatusCode  DecodeBufferSize(IzotByte bufSizeIn, uint16_t *decodedSizeOut)
 {
-    if (bufSizeIn <= 15)
-    {
-        return(bufSizeCodeLGbl[bufSizeIn]);
+    if (bufSizeIn <= 15) {
+        *decodedSizeOut = bufSizeCodeLGbl[bufSizeIn];
+        return LonStatusNoError;
     }
-    DBG_vPrintf(TRUE, "DecodeBufferSize: Invalid code.\n");
-    return(0);
+    OsalPrintError(LonStatusInvalidBufferSize, "DecodeBufferSize: Invalid buffer size code %d", bufSizeIn);
+    return(LonStatusInvalidBufferSize);
 }
 
-/*****************************************************************
-Function:  DecodeBufferCnt
-Returns:   Actual Buffer Count
-Reference: Tech Device Data Rev 1 p.9-10
-Purpose:   To compute the actual buffer count from code
-Comments:  None
-******************************************************************/
-IzotUbits16  DecodeBufferCnt(IzotByte bufCntIn)
+/*
+ * Decodes a buffer count code to the actual buffer count.
+ * Parameters:
+ *   bufCntIn: The buffer count code to decode
+ *   decodedCountOut: Pointer to variable to receive the decoded count
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusInvalidBufferCount if the
+ *   input code is invalid
+ */
+LonStatusCode  DecodeBufferCnt(IzotByte bufCntIn, uint16_t *decodedCountOut)
 {
-    if (bufCntIn <= 15)
-    {
-        return(bufCntCodeLGbl[bufCntIn]);
+    if (bufCntIn <= 15) {
+        *decodedCountOut = bufCntCodeLGbl[bufCntIn];
+        return LonStatusNoError;
     }
-    DBG_vPrintf(TRUE, "DecodeBufferCnt: Invalid code.\n");
-    return(0);
+    OsalPrintError(LonStatusInvalidBufferCount, "DecodeBufferCnt: Invalid buffer count code");
+    return(LonStatusInvalidBufferCount);
 }
 
-/*****************************************************************
-Function:  DecodeRptTimer
-Returns:   Actual timer value in ms
-Reference: Tech Device Data Rev 1 p.9-17
-Purpose:   To compute the actual rpt timer value from code
-Comments:  None
-******************************************************************/
-IzotUbits16 DecodeRptTimer(IzotByte rptTimerIn)
+/*
+ * Decodes a repeat timer code to the actual timer value in milliseconds.
+ * Parameters:
+ *   rptTimerIn: The repeat timer code to decode
+ *   decodedTimerOut: Pointer to variable to receive the decoded timer value
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusInvalidTimer if the input code is invalid
+ */
+LonStatusCode  DecodeRptTimer(IzotByte rptTimerIn, uint16_t *decodedTimerOut)
 {
-    if (rptTimerIn <= 15)
-    {
-        return(rptTimerCodeLGbl[rptTimerIn]);
+    if (rptTimerIn <= 15) {
+        *decodedTimerOut = rptTimerCodeLGbl[rptTimerIn];
+        return LonStatusNoError;
     }
-    DBG_vPrintf(TRUE, "DecodeRptTimer: Invalid code.\n");
-    return(0);
+    OsalPrintError(LonStatusInvalidTimer, "DecodeRptTimer: Invalid timer code");
+    return(LonStatusInvalidTimer);
 }
 
-/*****************************************************************
-Function:  DecodeRcvTimer
-Returns:   Actual Receive Timer value in ms
-Reference: Tech Device Data Rev 1 p.9-17
-Purpose:   To compute the actual rcv timer value in ms from code
-Comments:  None
-******************************************************************/
-IzotUbits16 DecodeRcvTimer(IzotByte rcvTimerIn)
+/*
+ * Decodes a receive timer code to the actual timer value in milliseconds.
+ * Parameters:
+ *   rcvTimerIn: The receive timer code to decode
+ *   decodedTimerOut: Pointer to variable to receive the decoded timer value
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusInvalidTimer if the input code is invalid
+ */
+LonStatusCode  DecodeRcvTimer(IzotByte rcvTimerIn, uint16_t *decodedTimerOut)
 {
-    if (rcvTimerIn <= 15)
-    {
-        return(rcvTimerCodeLGbl[rcvTimerIn]);
+    if (rcvTimerIn <= 15) {
+        *decodedTimerOut = rcvTimerCodeLGbl[rcvTimerIn];
+        return LonStatusNoError;
     }
-    DBG_vPrintf(TRUE, "DecodeRcvTimer: Invalid code.\n");
-    return(0);
+    OsalPrintError(LonStatusInvalidTimer, "DecodeRcvTimer: Invalid timer code");
+    return(LonStatusInvalidTimer);
 }
 
 /*****************************************************************
 Function:  DecodeTxTimer
 Returns:   Actual Transmit Timer Value in ms
 Reference: Tech Device Data Rev 1 p.9-17
-Purpose:   To compute the actual transmit timer value from code
-Comments:  None
+Purpose:   Computes the actual transmit timer value from code
 ******************************************************************/
 IzotUbits16 DecodeTxTimer(IzotByte  txTimerIn
 #ifdef IZOT_PROXY
@@ -314,14 +295,12 @@ IzotUbits16 DecodeTxTimer(IzotByte  txTimerIn
 {
     int v = 16;
 #ifdef IZOT_PROXY
-    if (longTimer)
-    {
+    if (longTimer) {
         txTimerIn += 16;
     }
 #endif
     v <<= txTimerIn/2;
-    if (txTimerIn&1)
-    {
+    if (txTimerIn&1) {
         v += v/2;
     }
     return v;
@@ -332,8 +311,7 @@ IzotUbits16 DecodeTxTimer(IzotByte  txTimerIn
 Function:  AccessNV
 Returns:   Address of NV conf table entry
 Reference: Tech Device Data Rev 1 p.9-18
-Purpose:   To Access the NV Config Table Entry given the index
-Comments:  None
+Purpose:   Accesses the NV Config Table Entry given the index
 ******************************************************************/
 IzotDatapointConfig *AccessNV(IzotUbits16 indexIn)
 {
@@ -341,24 +319,21 @@ IzotDatapointConfig *AccessNV(IzotUbits16 indexIn)
     {
         return(&eep->nvConfigTable[indexIn]);
     }
-    DBG_vPrintf(TRUE, "AccessNV: Invalid index.\n");
+    OsalPrintError(LonStatusDpIndexInvalid, "AccessNV: Invalid index");
     return(NULL);
 }
 
 /*****************************************************************
 Function:  AccessAlias
 Returns:   Address of Alias conf table entry
-Reference:
-Purpose:   To Access the Alias Config Table Entry given the index
-Comments:  None
+Purpose:   Accesses the Alias Config Table Entry given the index
 ******************************************************************/
 IzotAliasConfig *AccessAlias(IzotUbits16 indexIn)
 {
-    if (indexIn < NV_ALIAS_TABLE_SIZE)
-    {
+    if (indexIn < NV_ALIAS_TABLE_SIZE) {
         return(&eep->nvAliasTable[indexIn]);
     }
-    DBG_vPrintf(TRUE, "AccessAlias: Invalid index.\n");
+    OsalPrintError(LonStatusDpIndexInvalid, "AccessAlias: Invalid index");
     return(NULL);
 }
 
@@ -366,23 +341,18 @@ IzotAliasConfig *AccessAlias(IzotUbits16 indexIn)
 Function:  UpdateNV
 Returns:   None
 Reference: Tech Device Data Rev 1 p.9-18
-Purpose:   To update an entry in NV Config Table
-Comments:  None
+Purpose:   Updates an entry in the NV Config Table
 ******************************************************************/
 void UpdateNV(IzotDatapointConfig *nvStructInp, IzotUbits16 indexIn)
 {
-    if (nvStructInp && indexIn < nmp->nvTableSize)
-    {
+    if (nvStructInp && indexIn < nmp->nvTableSize) {
         eep->nvConfigTable[indexIn] = *nvStructInp;
         return;
     }
-    if (nvStructInp)
-    {
-        DBG_vPrintf(TRUE, "UpdateNV: Invalid index.\n");
-    }
-    else
-    {
-        DBG_vPrintf(TRUE, "UpdateNV: NULL nvStructInp.\n");
+    if (nvStructInp) {
+        OsalPrintError(LonStatusInvalidDatapointIndex, "UpdateNV: Invalid index");
+    } else {
+        OsalPrintError(LonStatusInvalidDatapointIndex, "UpdateNV: Invalid NV configuration table update");
     }
 }
 
@@ -390,143 +360,85 @@ void UpdateNV(IzotDatapointConfig *nvStructInp, IzotUbits16 indexIn)
 Function:  UpdateAlias
 Returns:   None
 Reference:
-Purpose:   To update an entry in Alias Config Table
-Comments:  None
+Purpose:   Updates an entry in Alias Config Table
 ******************************************************************/
 void UpdateAlias(IzotAliasConfig *aliasStructInp, IzotUbits16 indexIn)
 {
-    if (aliasStructInp && indexIn < NV_ALIAS_TABLE_SIZE)
-    {
+    if (aliasStructInp && indexIn < NV_ALIAS_TABLE_SIZE) {
         eep->nvAliasTable[indexIn] = *aliasStructInp;
         return;
     }
-    if (aliasStructInp)
-    {
-        DBG_vPrintf(TRUE, "UpdateAlias: Invalid index.\n");
-    }
-    else
-    {
-        DBG_vPrintf(TRUE, "UpdateAlias: NULL aliasStructInp.\n");
+    if (aliasStructInp) {
+        OsalPrintError(LonStatusInvalidDatapointIndex, "UpdateAlias: Invalid index");
+    } else {
+        OsalPrintError(LonStatusInvalidDatapointIndex, "UpdateAlias: Invalid alias configuration table update");
     }
 }
 
-/*****************************************************************
-Function:  ErrorMsg
-Returns:   None
-Reference: None
-Purpose:   To store error msgs produced by these functions.
-Comments:  It is just a sequence of Bytes that is large.
-           If there is no more space, it wraps around and
-           logs. Thus, if there are too many error logs,
-           we will only have the latest ones.
-           Each Log is automatically given a number.
-           The output has log number followed by message.
-******************************************************************/
-#if DEBUG_LCS
-void ErrorMsg(char errMessageIn[])
+/*
+ * Resets the LON Stack data structures for all layers.
+ * Parameters:
+ *   firstReset: TRUE if this is the first reset after power-up;
+ *               FALSE if this is a subsequent reset
+ * Returns:
+ *   LonStatusNoError if successful; LonStatusCode error code otherwise
+ */
+LonStatusCode NodeReset(IzotByte firstReset)
 {
-    printf(errMessageIn);
-    printf("\n\r");
-}
-
-/*****************************************************************
-Function:  DebugMsg
-Returns:   None
-Reference: None
-Purpose:   To Print Debugging Messages for stacks.
-Comments:  Actually not recorded anywhere. One needs to set
-           breakpoint at the end of this fn and print temp
-           to see the msg.
-******************************************************************/
-void DebugMsg(char debugMsgIn[])
-{
-    printf(debugMsgIn);
-    printf("\n\r");
-}
-#endif
-
-/*****************************************************************
-Function:  AllocateStorage
-Returns:   Pointer to data storage allocated or NULL
-Reference: None
-Purpose:   A Simple version of storage allocator similar to malloc.
-           A Global array is used to allocate the srorage.
-           If no more space, NULL is returned.
-Comments:  There is no function similar to free. There is no need
-           for such a funcion in the Reference Implementation.
-******************************************************************/
-void *AllocateStorage(IzotUbits16 sizeIn)
-{
-    IzotByte *ptr;
-
-    if (gp->mallocUsedSize + sizeIn > MALLOC_SIZE)
-    {
-        LCS_RecordError(IzotMemoryAllocFailure);
-        return(NULL); /* No space for requested size */
-    }
-
-    ptr = gp->mallocStorage + gp->mallocUsedSize;
-    gp->mallocUsedSize += sizeIn;
-    return(ptr);
-}
-
-/*****************************************************************
-Function:  NodeReset
-Returns:   None
-Reference:
-Purpose:   Initialization of node data structures.
-Comments:
-******************************************************************/
-void NodeReset(IzotByte firstReset)
-{
-#if LINK_IS_NOT(USB)
-    void APPReset(void), TCSReset(void), TSAReset(void), NWReset(void), LsUDPReset(void);
-    void (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset,  LsUDPReset};
-
+    LonStatusCode status = LonStatusNoError;
+    OsalPrintDebug(status, "NodeReset: Start LON application reset with firstReset=%d", firstReset);
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
+    LonStatusCode APPReset(void), TCSReset(void), TSAReset(void), NWReset(void),
+            LsUDPReset(void);
+    LonStatusCode (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset,
+            LsUDPReset};
+#elif LINK_IS(USB)
+    LonStatusCode APPReset(void), TCSReset(void), TSAReset(void), NWReset(void),
+            LKReset(void);
+    LonStatusCode (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset,
+            LKReset};
+#elif LINK_IS(MIP)
+    LonStatusCode APPReset(void), TCSReset(void), TSAReset(void), NWReset(void),
+            LKReset(void), PHYReset(void);
+    LonStatusCode (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset,
+            LKReset, PHYReset};
 #else
-    void APPReset(void), TCSReset(void), TSAReset(void), NWReset(void);
-    void (*resetFns[])(void) = {APPReset, TCSReset, TSAReset, NWReset};
-    
-#endif
+    OsalPrintError(LonStatusInitializationFailed, "NodeReset: Unsupported link type");
+    return;
+#endif // LINK_IS(ETHERNET) || LINK_IS(WIFI)
     IzotByte fnNum, fnsCnt;
 
-    if (!firstReset)
-    {
-        // Just do an actual reset of the device.
+    if (!firstReset) {
+        // Just do an actual reset of the device
     }
 
-    /* Init variables that are not in EEPROM */
+    /* Initialize variables that are not in EEPROM */
     memset(&nmp->stats, 0, sizeof(StatsStruct));
     gp->prevServiceLedState  = 0xFF;
     gp->preServiceLedPhysical = 0xFF;
 
-    /* A node in soft off-line state should go on-line state */
+    /* A node in soft off-line state should go to the on-line state */
     if (IZOT_GET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE) == IzotConfigOnLine && 
-    gp->appPgmMode == OFF_LINE)
-    {
+    gp->appPgmMode == OFF_LINE) {
         gp->appPgmMode = ON_LINE; /* Normal state. on-line. */
     }
 
-    /* If a node is reset while in unconfigured state, it will come back in
+    /* If a node is reset while in the unconfigured state, it will come back in
        offline mode when asked to go configured later. */
-    if (NodeUnConfigured())
-    {
+    if (NodeUnConfigured()) {
         gp->appPgmMode = OFF_LINE;
     }
 
-    /* First, Let each layer determine the address of all its
-       data strcutures */
+    /* First, let each layer determine the address of all its data structures */
     gp->mallocUsedSize = 0;
 
     /* Call all the Reset functions */
     fnsCnt = sizeof(resetFns)/sizeof(FnType);
-    for (fnNum = 0; fnNum < fnsCnt; fnNum++)
-    {
-        resetFns[fnNum](); /* Call the Reset function. */
-        if (!gp->resetOk)
-        {
-            DBG_vPrintf(TRUE, "NodeReset: Failure");
-            return;
+    for (fnNum = 0; fnNum < fnsCnt; fnNum++) {
+        status = resetFns[fnNum](); /* Call the Reset function. */
+        if (!LON_SUCCESS(status) || !gp->resetOk) {
+            OsalPrintError(status, "NodeReset: Reset failure");
+            return status;
         }
     }
 
@@ -534,59 +446,60 @@ void NodeReset(IzotByte firstReset)
     PHYInitSPM(firstReset);
 #endif // LINK_IS(MIP)
 
-    if (firstReset)
-    {
+    if (firstReset) {
         memset(gp->prevChallenge, 0, sizeof(gp->prevChallenge));
     }
 
-    if (nmp->resetCause == IzotExternalReset || nmp->resetCause == IzotPowerUpReset)
-    {
+    if (nmp->resetCause == IzotExternalReset || nmp->resetCause == IzotPowerUpReset) {
         SetLonTimer(&gp->tsDelayTimer, TS_RESET_DELAY_TIME);
     }
     gp->resetNode        = FALSE;
     
     IzotReset(NULL);
+    OsalPrintDebug(status, "NodeReset: Completed LON application reset");
+    return status;
 }
 
 /*****************************************************************
 Function:  InitEEPROM
-Returns:   Status
+Returns:   <LonStatusCode> status
 Reference: None
-Purpose:   To initialize the EEPROM data items based on constants
+Purpose:   Initializes the EEPROM data items based on constants
            in custom.h and values set in custom.c
 Comments:  Incomplete Initialization. Make sure it has the var you
            want or else add it here or in custom.h or custom.c
                 depending on where it fits.
 ******************************************************************/
-Status    InitEEPROM(uint32_t signature)
+LonStatusCode InitEEPROM(uint32_t signature)
 {
-    Status sts = LS_SUCCESS;
+    LonStatusCode status = LonStatusNoError;
     int i;
-
-    // We first get the persistent data from NVM.
-    if (!gp->initialized)
-    {
-        EchErr err;
-
-        // Init all of NVM
+    
+    if (!gp->initialized) {
+        // Initialize all of non-volatile memory (NVM) to zero
         memset(eep, 0, sizeof(*eep));
 
-        err = LCS_ReadNvm();
-        if (err == ECHERR_INVALID_PARAM)
-        {
-            // This can occur if the NVM image has grown too large for the max PAL size
-            sts = LS_FAILURE;
-        }
-        else if (err != ECHERR_OK || 
-        memcmp(&eep->dimensions, &dimensions, sizeof(dimensions)) || eep->signature != signature)
-        {
-            // Re-init all of NVM
+        // Get the persistent data from persistent data storage if available
+        status = LCS_ReadPersistentNetworkImage();
+        if (status == LonStatusInvalidParameter) {
+            // This can occur if the NVM image has grown too large
+            status = LonStatusNoMemoryAvailable;
+            OsalPrintError(status, "InitEEPROM: Non-volatile memory image too large");
+        } else if (status != LonStatusNoError || 
+                memcmp(&eep->dimensions, &dimensions, sizeof(dimensions)) || 
+                eep->signature != signature) {
+            // This is a first boot or there is a corrupted non-volatile
+            // data segment, changed segment structure, or changed signature;
+            // reset status to no error and re-initialize persistent data storage
+            status = LonStatusNoError;
+
+            // Re-initialize all of NVM
             memset(eep, 0, sizeof(*eep));
 
             IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE, 
             IzotApplicationUnconfig);
 
-            /* Initialize configData */
+            // Initialize configuration data
             IZOT_SET_UNSIGNED_WORD(eep->configData.ChannelId, 0);
             IZOT_SET_ATTRIBUTE(eep->configData, IZOT_CONFIG_COMM_CLOCK, 3);
             IZOT_SET_ATTRIBUTE(eep->configData, IZOT_CONFIG_COMM_TYPE, 
@@ -606,16 +519,15 @@ Status    InitEEPROM(uint32_t signature)
             eep->configData.CommunicationParameters.TransceiverParameters[4] = 0;
             eep->configData.CommunicationParameters.TransceiverParameters[5] = 0;
             eep->configData.CommunicationParameters.TransceiverParameters[6] = 0;
-            /* dirParams only used for direct mode not special purpose mode */
-            /* eep->configData.param.dirParams.bitSyncThreshHold = 1; */
+            // dirParams are only used for direct mode not special purpose mode
+            // eep->configData.param.dirParams.bitSyncThreshHold = 1;
             IZOT_SET_ATTRIBUTE(eep->configData, IZOT_CONFIG_NONGRPRCV, NON_GROUP_TIMER);
             IZOT_SET_ATTRIBUTE(eep->configData, IZOT_CONFIG_NMAUTH, NmAuth);
             IZOT_SET_ATTRIBUTE(eep->configData, IZOT_CONFIG_PREEMPT, 0);
 
-            /* Initialization based on custom.c */
-            memcpy(eep->configData.Location, cp->location, LOCATION_LEN);
-            for (i = 0; i <= cp->twoDomains; i++)
-            {
+            // Initialization based on custom.c
+            memcpy(eep->configData.Location, cp->location, IZOT_LOCATION_LENGTH);
+            for (i = 0; i <= cp->twoDomains; i++) {
                 IZOT_SET_ATTRIBUTE(eep->domainTable[i], IZOT_DOMAIN_ID_LENGTH, cp->len[i]);
                 memcpy(eep->domainTable[i].Id, cp->domainId[i], cp->len[i]);
                 eep->domainTable[i].Subnet = cp->subnet[i];
@@ -626,10 +538,8 @@ Status    InitEEPROM(uint32_t signature)
             LCS_InitAddress();
             nmp->nvTableSize  = 0;
             LCS_InitAlias();
-            LCS_WriteNvm();
-        }
-        else
-        {
+            LCS_WritePersistentNetworkImage();
+        } else {
             IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NODE_STATE, eep->nodeState);
         }
 
@@ -646,9 +556,9 @@ Status    InitEEPROM(uint32_t signature)
         memcpy(eep->readOnlyData.ProgramId, cp->progId, IZOT_PROGRAM_ID_LENGTH);
         
         /* Init remainder based on custom.h and default values */
-        eep->readOnlyData.ModelNum         = MODEL_NUM;
+        eep->readOnlyData.ArchNum         = ARCHITECTURE_NUM;
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_MINORNUM, 
-        MINOR_MODEL_NUM);
+        MINOR_ARCH_NUM);
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_CHECKSUM,0);
 
         eep->readOnlyData.DatapointFixed[0] = 0xFF; /* not useful */
@@ -670,9 +580,9 @@ Status    InitEEPROM(uint32_t signature)
            addressCnt is set to min(15, NUM_ADDR_TBL_ENTRIES).
            The remaining entries are not seen by the lonbuilder tool */
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_ADDRESS_CNT , 
-        (cp->addressCnt <= 15) ? cp->addressCnt : 15);
+                (cp->addressCnt <= 15) ? cp->addressCnt : 15);
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_REC_TRANSCNT, 
-        (RECEIVE_TRANS_COUNT < 16) ? RECEIVE_TRANS_COUNT - 1 : 15);
+                (RECEIVE_TRANS_COUNT < 16) ? RECEIVE_TRANS_COUNT - 1 : 15);
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_OUTBUF_SIZE, APP_OUT_BUF_SIZE);
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_INBUF_SIZE, APP_IN_BUF_SIZE);
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_NW_OUTBUF_SIZE, NW_OUT_BUF_SIZE);
@@ -691,7 +601,7 @@ Status    InitEEPROM(uint32_t signature)
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_ALIAS_CNT, 0); /* Host based node */
         eep->readOnlyData.AliasCount      = AliasTableCount; /* Host based node */
         eep->readOnlyData.DatapointCount  = DataPointCount;
-        eep->readOnlyData.Extended          = cp->addressCnt;
+        eep->readOnlyData.Extended        = cp->addressCnt;
         // Record the dimensions uses for NVM.  If these change, we'll reset all the NVM
         #if LON_DMF_ENABLED
         IZOT_SET_ATTRIBUTE(eep->readOnlyData, IZOT_READONLY_DMF, 1);
@@ -722,7 +632,7 @@ Status    InitEEPROM(uint32_t signature)
         snvt_capability_info->dyn_fb_capacity = 0;
         snvt_capability_info->eat_address_capacity = cp->addressCnt;
     }
-    return sts;
+    return status;
 }
 
 /*****************************************************************
@@ -940,22 +850,6 @@ IzotByte NodeUnConfigured(void)
 }
 
 /*******************************************************************************
-Function: RecordError
-Returns:  void
-Purpose:  Log an error to the error log.
-*******************************************************************************/
-void LCS_RecordError(IzotSystemError err)
-{
-      // To avoid wearing out the NVM in case there is repeated logging of 
-    // the same error, check for a change first.
-    if (eep->errorLog != err)
-    {
-        eep->errorLog = err;
-        LCS_WriteNvm();
-    }
-}
-
-/*******************************************************************************
 Function: LCS_LogRxStat
 Returns:  void
 Purpose:  Log an RX stat.  See above.
@@ -1027,12 +921,12 @@ void LCS_InitAlias(void)
  * PARAMETERS: None
  *
  ****************************************************************************/
-Status AppInit(void) 
+LonStatusCode AppInit(void) 
 {
 #ifdef SECURITY_II
 	LtSecurityII_Init();
 #endif
-    return(LS_SUCCESS);
+    return(LonStatusNoError);
 };
 
 /****************************************************************************
@@ -1043,38 +937,35 @@ Status AppInit(void)
  *              or failed.
  *
  ****************************************************************************/
-void MsgCompletes(Status status, MsgTag tag)
+void MsgCompletes(LonStatusCode status, MsgTag tag)
 {
-    IzotBool stat = status ? FALSE : TRUE;
+    IzotBool stat = status != LonStatusNoError ? FALSE : TRUE;
     unsigned Tag =  (unsigned)tag;
     
-    if (!IzotFilterMsgCompleted(Tag, stat))
-    {
+    if (!IzotFilterMsgCompleted(Tag, stat)) {
         IzotMsgCompleted(Tag, stat);
     }
 }
 
 void DoApp(IzotBool isOnline) 
 {
+    #if PARKER_MOD
     (void)isOnline;
-
+    #endif // PARKER_MOD
+    
     MsgIn* msg_in = NULL;
     RespIn* rsp_in = NULL;
     
-    if (MsgReceive(&msg_in))
-    {
+    if (MsgReceive(&msg_in)) {
         if (!IzotFilterMsgArrived(&msg_in->addr, (IzotCorrelator)&msg_in->reqId, 0, msg_in->service, 
-        msg_in->authenticated, msg_in->code, msg_in->data, msg_in->len))
-        {
+        msg_in->authenticated, msg_in->code, msg_in->data, msg_in->len)) {
             IzotMsgArrived(&msg_in->addr, (IzotCorrelator)&msg_in->reqId, 0, msg_in->service, msg_in->authenticated, 
             msg_in->code, msg_in->data, msg_in->len); 
         }
         MsgFree();
     }
-    if (RespReceive(&rsp_in))
-    {
-        if (!IzotFilterResponseArrived(&rsp_in->addr, rsp_in->tag, rsp_in->code, rsp_in->data, rsp_in->len))
-        {
+    if (RespReceive(&rsp_in)) {
+        if (!IzotFilterResponseArrived(&rsp_in->addr, rsp_in->tag, rsp_in->code, rsp_in->data, rsp_in->len)) {
             IzotResponseArrived(&rsp_in->addr, rsp_in->tag, rsp_in->code, rsp_in->data, rsp_in->len);
         }
         RespFree();

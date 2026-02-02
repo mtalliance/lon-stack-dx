@@ -1,7 +1,7 @@
 /*
  * IzotCal.c
  *
- * Copyright (c) 2022-2025 EnOcean
+ * Copyright (c) 2022-2026 EnOcean
  * SPDX-License-Identifier: MIT
  * See LICENSE file for details.
  * 
@@ -26,7 +26,7 @@
 #endif
 
 #if PROTOCOL_IS(LON_IP)
-#include "ls_udp/IPv4ToLsUdp.h"
+#include "lon_udp/ipv4_to_lon_udp.h"
 #endif
 
 #if LINK_IS(WIFI)
@@ -146,7 +146,7 @@ static void EventWlanInitDone(void *data)
 	os_mem_free(dp);
 
     // Get the MAC address of the Wi-Fi interface
-    if (!IZOT_SUCCESS(HalGetMacAddress(mac))) {
+    if (!LON_SUCCESS(HalGetMacAddress(mac))) {
         CAL_Printf("Failed to to get MAC address\r\n");
         return;
     }
@@ -233,7 +233,6 @@ static void EventNormalConnecting(void *data)
  *   Network dependent services can be started here. These services
  *   can be stopped on disconnection and reset-to-provisioning events.
  */ 
-#if LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
 static void EventNormalConnected(void *data)
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -259,9 +258,8 @@ static void EventNormalConnected(void *data)
     SetLsAddressFromIpAddr();
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-#endif
 
-#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
+
 /*
  * Handles a normal provisioned network disconnection event.
  * Parameters:
@@ -317,6 +315,8 @@ static void EventNormalDHCPRenew(void *data)
     CAL_Printf("DHCP renew\r\n");
 }
 
+
+#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
  * Handles a Wi-Fi link provisioning reset event.
  * Parameters:
@@ -379,7 +379,7 @@ static void EventProvClientDone(void *data)
  */
 int common_event_handler(int event, void *data)
 {
-#if LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
+#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
     switch (event) {
     case AF_EVT_WLAN_INIT_DONE:
         EventWlanInitDone(data);
@@ -415,7 +415,7 @@ int common_event_handler(int event, void *data)
         break;
     }
 
-#endif  // LINK_IS(ETHERNET) || (LINK_IS(WIFI) && PROCESSOR_IS(MC200))
+#endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 
     return 0;
 }
@@ -427,7 +427,6 @@ int common_event_handler(int event, void *data)
  * Returns:
  *  None
  */
-#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void InitModules()
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -452,7 +451,6 @@ static void InitModules()
     set_reconnect_iter(5);
 #endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 }
-#endif
 
 /*
  * Starts the IP link.
@@ -768,6 +766,7 @@ void CalSend(uint32_t port, IzotByte* addr, IzotByte* pData,
  */
 int CalReceive(IzotByte* pData, IzotByte* pSourceAddr)
 {
+    uint16_t bufferSize;
     int dataLength = 0;
 #if PROTOCOL_IS(LON_IP)
 #if PLATFORM_IS(FRTOS_ARM_EABI)
@@ -775,9 +774,11 @@ int CalReceive(IzotByte* pData, IzotByte* pSourceAddr)
     int                 fromLen = sizeof(from);
     uint32_t            SrcIP;
     
-    dataLength = recvfrom(app_udp_socket, pData, 
-    DecodeBufferSize(CAL_RECEIVE_BUF_SIZE), 0, (struct sockaddr *)&from, 
-    (socklen_t *)&fromLen);
+    if (!LON_SUCCESS(DecodeBufferSize(CAL_RECEIVE_BUF_SIZE, &bufferSize))) {
+        OsalPrintError(LonStatusInvalidBufferCount, "CalReceive: Invalid buffer size");
+        return -1;
+    }
+    dataLength = recvfrom(app_udp_socket, pData, bufferSize, 0, (struct sockaddr *)&from, (socklen_t *)&fromLen);
     
     // Get the data if dataLength is bigger than zero
     if (dataLength > 0) {

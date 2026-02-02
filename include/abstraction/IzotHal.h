@@ -1,7 +1,7 @@
 /*
  * IzotHal.h
  *
- * Copyright (c) 2022-2025 EnOcean
+ * Copyright (c) 2022-2026 EnOcean
  * SPDX-License-Identifier: MIT
  * See LICENSE file for details.
  * 
@@ -13,10 +13,18 @@
  *          Linux hosts as well as the Marvell 88MC200.
  */
 
-#include "izot/IzotPlatform.h"
+#if !defined(IZOTHAL_H)
+#define IZOTHAL_H
 
-#if !defined(DEFINED_IZOTHAL_H)
-#define DEFINED_IZOTHAL_H
+#ifdef  __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
+#include <stdbool.h>
+
+#include "izot/IzotPlatform.h"
+#include "abstraction/IzotOsal.h"
 
 #define LINUX_FLASH_OFFSET      0
 #define FREERTOS_FLASH_OFFSET   0x6000
@@ -27,7 +35,7 @@
 #define NO_OF_REGIONS           1
 
 /*****************************************************************
- * Section: Function Declarations
+ * Section: Storage Function Declarations
  *****************************************************************/
 
 /*
@@ -39,7 +47,7 @@
  *   LonStatusNoError (0) on success, or an <LonStatusCode> error code
  *   on failure.
  */
-extern LonStatusCode HalFlashDrvInit(void);
+extern LonStatusCode HalInitStorage(void);
 
 /*
  * Returns information about the flash region used for persistent data.
@@ -60,72 +68,119 @@ extern LonStatusCode HalFlashDrvInit(void);
  *   memory flash memory region.  The flash region is used
  *   for persistent data storage.
  */
-extern LonStatusCode HalGetFlashInfo(size_t *offset, size_t *region_size,
-        int *number_of_blocks, size_t *block_size, int *number_of_regions
+extern LonStatusCode HalStorageInfo(size_t *offset, size_t *region_size,
+        int *number_of_blocks, size_t *block_size, int *number_of_regions,
+        bool *erase_required, uint8_t *erase_value
 );
 
 /*
  * Opens the hardware-specific driver for interfacing with 
  * persistent memory.
  * Parameters:
- *   None
+ *   persistent_seg_type: Persistent data storage segment to be opened
+ *   persistent_seg_name: Name of the persistent data storage segment to be opened
+ *   max_data_size: Maximum size of the persistent data segment in bytes
  * Returns:
- *   LonStatusNoError (0) on success, or an <LonStatusCode> error code
- *   on failure.
+ *   LonStatusNoError on success, or a LonStatusCode error code on failure.
  */
-extern LonStatusCode HalFlashDrvOpen(void);
+extern LonStatusCode HalOpenStorageSegment(const IzotPersistentSegType persistent_seg_type,
+    char *persistent_seg_name, size_t max_data_size);
 
 /*
  * Closes the hardware-specific driver for interfacing with
  * persistent memory.
  * Parameters:
- *   None
+ *   persistent_seg_type: Persistent data storage segment to be closed
  * Returns:
  *   None
  */
-extern LonStatusCode HalFlashDrvClose(void);
+extern LonStatusCode HalCloseStorageSegment(const IzotPersistentSegType persistent_seg_type);
 
 /*
  * Erases the persistent data from the specified starting offset
  * by the specified size in bytes.
  * Parameters:
- *   start: offset in bytes from the start of the flash region
+ *   persistent_seg_type: Persistent data storage segment to be prepared
+ *   seg_start: virtual offset in bytes of the segment from the start of storage region
+ *   start: virtual offset in bytes from the start of the storage region
  *   size: number of bytes to erase
+ *   erase_value: value to use for erasing
  * Returns:
- *   LonStatusNoError (0) on success, or an <LonStatusCode> error code
- *   on failure.
+ *   LonStatusNoError on success, or a LonStatusCode error code on failure.
  */
-extern LonStatusCode HalFlashDrvErase(size_t start, size_t size);
+extern LonStatusCode HalPrepareStorageSegment(
+        const IzotPersistentSegType persistent_seg_type,
+        size_t seg_start, size_t start, size_t size, uint8_t erase_value);
 
 /*
- * Writes the contents of buffer `buf` to an open file descriptor
- * `flashFd`, starting at offset `start` for `size` bytes.
+ * Writes a buffer to a persistent data storage segment.
  * Parameters:
- *   start: offset in bytes from the start of the flash region
+ *   persistent_seg_type: Persistent data storage segment to write
+ *   seg_start: virtual offset in bytes of the segment from the start of storage region
+ *   start: virtual offset in bytes from the start of the storage region
  *   size: number of bytes to write
  * Returns:
- *   LonStatusNoError (0) on success, or an <LonStatusCode> error code
- *   on failure.
+ *   LonStatusNoError on success, or a LonStatusCode error code on failure.
  * Notes:
  *   The file is extended if the file size is less than the starting
  *   offset.
  */
-extern LonStatusCode HalFlashDrvWrite(IzotByte *buf, size_t start, size_t size);
+extern LonStatusCode HalWriteStorageSegment(
+        const IzotPersistentSegType persistent_seg_type, IzotByte *buf, size_t seg_start, size_t start, size_t size);
 
 /*
- * Reads `size` bytes from the file descriptor `flashFd` into buffer
- * `buf`, starting at offset `start`.
+ * Reads a buffer from a persistent data storage segment.
  * Parameters:
- *   start: offset in bytes from the start of the flash region
+ *   persistent_seg_type: Persistent data storage segment to read
+ *   seg_start: virtual offset in bytes of the segment from the start of storage region
+ *   start: virtual offset in bytes from the start of the storage region
  *   size: number of bytes to read
  * Returns:
- *   LonStatusNoError (0) on success, or an <LonStatusCode> error code
- *   on failure.
+ *   LonStatusNoError on success, or a LonStatusCode error code on failure.
  * Notes:
  *    An error is returned if the file size is less than `start + size` bytes.
  */
-extern LonStatusCode HalFlashDrvRead(IzotByte *buf, size_t start, size_t size);
+extern LonStatusCode HalReadStorageSegment(
+        const IzotPersistentSegType persistent_seg_type, IzotByte *buf, size_t seg_start, size_t start, size_t size);
 
+/*****************************************************************
+ * Section: LON USB Interface Abstraction Function Declarations
+ *****************************************************************/
+// Callback for async read: receives buffer, byte count, user data
+typedef void (*usbtty_read_callback_t)(const char *buf, ssize_t len, void *user);
+
+// USB TTY context structure
+typedef struct usbtty_ctx {
+    int fd;                     // File descriptor for the open tty device
+    usbtty_read_callback_t cb;  // Pointer to the user-supplied callback function
+    void *user;                 // Optional user data pointer passed to the callback
+    OsalThreadId thread;        // Thread handle for the asynchronous read thread
+    volatile int stop;          // Flag to signal the thread to stop reading and exit
+} usbtty_ctx;
+
+// Open USB tty device with custom line discipline; returns file descriptor or <0 on error
+LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out);
+
+// Close device (just closes fd)
+void HalCloseUsb(int fd);
+
+/*
+ * Writes buffer to LON USB network interface.
+ * Reliable write helper for user-space file descriptors (TTY/USB).
+ * Attempts to write the entire buffer unless a non-recoverable error occurs.
+ * Retries on EINTR and EAGAIN. For partial progress followed by error, the
+ * already-written byte count is returned via bytes_written.
+ */
+LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_written);
+
+// Polling USB read abstraction. Returns LonStatusNoError with *bytes_read set
+// to the number of bytes read, LonStatusNoMessageAvailable if no data is available,
+// or another LonStatusCode on error.
+LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read);
+
+/*****************************************************************
+ * Section: MAC Address Function Definition
+ *****************************************************************/
 /*
  * Gets the MAC address of the host IP interface.
  * Parameters:
@@ -140,6 +195,9 @@ extern LonStatusCode HalFlashDrvRead(IzotByte *buf, size_t start, size_t size);
  */ 
 extern LonStatusCode HalGetMacAddress(unsigned char *mac);
 
+/*****************************************************************
+ * Section: Reboot Function Declaration
+ *****************************************************************/
 /*
  * Reboots the host device.
  * Parameters:
@@ -151,4 +209,8 @@ extern LonStatusCode HalGetMacAddress(unsigned char *mac);
  */ 
 extern LonStatusCode HalReboot(void);
 
-#endif  /* defined(DEFINED_IZOTHAL_H) */
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
+
+#endif  /* defined(IZOTHAL_H) */

@@ -1,42 +1,32 @@
-//
-// lcs_proxy.c
-//
-// Copyright (C) 2022 EnOcean
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of
-// this software and associated documentation files (the "Software"), to deal in 
-// the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to do
-// so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-//
-//  Purpose: LON Enhanced Proxy (LTEP) repeating.
-//
-//  PS - proxy source - initiates transaction chain.
-//  PR - proxy repeater - forwards proxy message.
-//  PA - proxy agent - sends normal message to target.
-//  PT - proxy target - terminates proxy chain.
-//
+/*
+ * lcs_proxy.c
+ *
+ * Copyright (c) 2022-2025 EnOcean
+ * SPDX-License-Identifier: MIT
+ * See LICENSE file for details.
+ * 
+ * Title:   LON Enhanced Proxy (LTEP) Repeating Implementation
+ * Purpose: Implements the LON Enhanced Proxy (LTEP) repeating functions.
+ * Notes:   LTEP repeating allows a LON Stack DX device to function
+ *          as a proxy repeater for LON Enhanced Proxy messages.
+ *          LTEP repeating is only used in systems using LON power line
+ *          communication that require the extended range provided
+ *          by LTEP repeating.
+ * 
+ *          Following are the key roles in LTEP repeating:
+ * 
+ *          - PS: proxy source - initiates transaction chain
+ *          - PR: proxy repeater - forwards proxy message
+ *          - PA: proxy agent - sends normal message to target
+ *          - PT: proxy target - terminates proxy chain
+ */
 
 #ifdef ENABLE_PROXY_REPEATING
 #include "lcs/lcs_proxy.h"
 
-Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr);
+LonStatusCode ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr);
 
-static const unsigned char addrSizeTable[PX_ADDRESS_TYPES] =
-{
+static const unsigned char addrSizeTable[PX_ADDRESS_TYPES] = {
     sizeof(ProxyHeader) + sizeof(ProxySicb) + sizeof(ProxyGroupAddress),
     sizeof(ProxyHeader) + sizeof(ProxySicb) + sizeof(ProxySubnetNodeAddress),
     sizeof(ProxyHeader) + sizeof(ProxySicb) + sizeof(ProxyNeuronIdAddress),
@@ -56,8 +46,7 @@ void processProxyRepeaterAsAgent(APPReceiveParam *appReceiveParamPtr, APDU *apdu
     int len = (int)(txcpos+sizeof(ProxyTxCtrl));
 
     // Make sure packet has a certain minimum size.
-    if (len < appReceiveParamPtr->pduSize && appReceiveParamPtr->srcAddr.dmn.domainIndex != FLEX_DOMAIN)
-    {
+    if (len < appReceiveParamPtr->pduSize && appReceiveParamPtr->srcAddr.dmn.domainIndex != FLEX_DOMAIN) {
 		APPReceiveParam arp;
 		APDU			apdu;
 
@@ -72,23 +61,16 @@ void processProxyRepeaterAsAgent(APPReceiveParam *appReceiveParamPtr, APDU *apdu
     }
 }
 
-//
-// processLtepResponse
-//
-// Process a LTEP completion event
-//
-
-Status ProcessLtepCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr, Status status)
+// Processes an LTEP completion event
+LonStatusCode ProcessLtepCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr, LonStatusCode status)
 {
-	Status sts = LS_SUCCESS;
-	if (!appReceiveParamPtr->proxyDone)
-	{
+	LonStatusCode sts = LonStatusNoError;
+	if (!appReceiveParamPtr->proxyDone) {
 		int len = 0;
 		IzotByte code = LT_ENHANCED_PROXY_SUCCESS;
 		IzotByte data[1];
 
-		if (status == LS_FAILURE)
-		{
+		if (status != LonStatusNoError) {
 			code = LT_ENHANCED_PROXY_FAILURE;
 			len = 1;
 			data[0] = appReceiveParamPtr->proxyCount;
@@ -98,12 +80,8 @@ Status ProcessLtepCompletion(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr,
 	return sts;
 }
 
-//
-// processLtep
-//
-// Process LonTalk Enhanced Proxy
-//
-Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
+// Processes LonTalk Enhanced Proxy
+LonStatusCode ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 {
     int             offset;
     int             count;
@@ -125,10 +103,10 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     int             domIdx = appReceiveParamPtr->srcAddr.dmn.domainIndex;
     Queue		   *outQPtr;
 	AltKey			altKey;
-	IzotByte			longTimer = FALSE;
-	IzotServiceType		service;
+	IzotByte		longTimer = FALSE;
+	IzotServiceType	service;
     int 			adjust = 0;
-	IzotSendAddress		addr;
+	IzotSendAddress	addr;
 
 	memset(&addr, 0, sizeof(addr));
 	altKey.altKey = false;
@@ -137,12 +115,9 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     uniform = ph.uniform_by_src || ph.uniform_by_dest;
     src_subnet = appReceiveParamPtr->srcAddr.subnetAddr.Subnet;
     dst_subnet = eep->domainTable[domIdx].Subnet;
-    if (ph.uniform_by_src)
-    {
+    if (ph.uniform_by_src) {
         subnet = src_subnet;
-    }
-    else
-    {
+    } else {
         subnet = dst_subnet;
     }
     proxyCount = count = ph.count;
@@ -153,19 +128,16 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
     // Get txctrl values
     txc = *(ProxyTxCtrl*)(&pData[txcpos]);
 
-    if (ph.all_agents && count)
-    {
+    if (ph.all_agents && count) {
         processProxyRepeaterAsAgent(appReceiveParamPtr, apduPtr, txcpos);
     }
 
     // If we got something on the flex domain, we just use domain index 0.
-    if (domIdx == FLEX_DOMAIN)
-	{
+    if (domIdx == FLEX_DOMAIN) {
         domIdx = 0;
 	}
 
-    if (count != 0)
-    {
+    if (count != 0) {
         ProxySubnetNodeAddress *pa;
 
         pa = (ProxySubnetNodeAddress*) (&pData[sizeof(ProxyHeader)] - uniform);
@@ -181,8 +153,7 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
         // Skip header and address
         offset = (int)(sizeof(ProxyHeader) + sizeof(ProxySubnetNodeAddress) - uniform);
 
-        if (count == 0)
-        {
+        if (count == 0) {
             // Last address.  Skip txctrl too.
             offset += (int)sizeof(ProxyTxCtrl);
         }
@@ -202,9 +173,8 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
         ph.count--;
         // Position new header into data space in preparation for copy below.
         pData[--offset] = *(unsigned char*)&ph;
-    }
-    else // Proxy Agent
-    {
+    } else {
+        // Proxy Agent mode - no more addresses.
         ProxySicb* pProxySicb;
 
         pProxySicb = (ProxySicb*)&pData[sizeof(ProxyHeader)];
@@ -227,8 +197,7 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 
             pAddress = (ProxyTargetAddress*)(pProxySicb + 1);
 
-            if (pProxySicb->mode == PROXY_AGENT_MODE_ALTKEY)
-            {
+            if (pProxySicb->mode == PROXY_AGENT_MODE_ALTKEY) {
                 int i;
 				int len;
 				int domainIndex = domIdx;
@@ -243,11 +212,9 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 
                 pKeyDelta = pKey->key;
 				i = 0;
-				while (domainIndex < 2)
-                {
+				while (domainIndex < 2) {
 					int j;
-                    for (j=0; j<DOMAIN_ID_LEN; j++)
-                    {
+                    for (j=0; j<IZOT_DOMAIN_ID_MAX_LENGTH; j++) {
                         altKey.altKeyValue[i][j] = eep->domainTable[domainIndex].Key[j] + *pKeyDelta;
                         pKeyDelta++;
                     }
@@ -258,8 +225,7 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
                 pAddress = (ProxyTargetAddress*)((unsigned char*)pAddress + (int)(sizeof(ProxyAuthKey)-sizeof(pKey->key)+len));
             }
 
-            switch (pProxySicb->type)
-            {
+            switch (pProxySicb->type) {
             case PX_NEURON_ID:
 				memcpy(addr.uniqueNodeId.NeuronId, pAddress->nid.nid, sizeof(addr.uniqueNodeId.NeuronId));
 				subnet = pAddress->nid.subnet;
@@ -312,24 +278,19 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 	addr.snode.node			= node;
 	addr.snode.subnetID		= subnet;
 	addr.snode.domainIndex  = domIdx;  			// Set the domain index to be the one in which it was received. 
-	if (addressType & 0x80)
-	{
+	if (addressType & 0x80) {
 		addr.noAddress = addressType;
 	}
 
 	// Get an output buffer for the proxy relay
-    if (appReceiveParamPtr->priority)
-    {
+    if (appReceiveParamPtr->priority) {
         outQPtr = (service==IzotServiceUnacknowledged) ? &gp->nwOutPriQ : &gp->tsaOutPriQ;
-    }
-    else
-    {
+    } else {
         outQPtr = (service==IzotServiceUnacknowledged) ? &gp->nwOutQ : &gp->tsaOutQ;
     }
 
     /* Check if the target queue has space for forwarding this request. */
-    if (QueueFull(outQPtr))
-    {
+    if (QueueFull(outQPtr)) {
         // Failure indicates we didn't process the message so don't free it!  
 	    // Note that the following deadlock condition can occur:
 	    // App Input queue full but stymied by proxy relay
@@ -337,37 +298,26 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 		// On the Neuron, this can't occur because completion events are sent in the output buffer, not a new input buffer.
 		// LCS should probably be implemented more like the Neuron.  In the meantime, let's just have a timeout where
 		// we fail the proxy if we can't get an output buffer.
-		if (LonTimerExpired(&gp->proxyBufferWait))
-		{
+		if (LonTimerExpired(&gp->proxyBufferWait)) {
 			SendResponse(appReceiveParamPtr->reqId, LT_ENHANCED_PROXY_FAILURE, sizeof(proxyCount), &proxyCount);
-			return LS_SUCCESS;
-		}
-		else if (!LonTimerRunning(&gp->proxyBufferWait))
-		{
+			return LonStatusNoError;
+		} else if (!LonTimerRunning(&gp->proxyBufferWait)) {
 			SetLonTimer(&gp->proxyBufferWait, 1000);
 		}
-        return LS_FAILURE;
-    }
-	else
-	{
+        return LonStatusNoBufferAvailable;
+    } else {
 		SetLonTimer(&gp->proxyBufferWait, 0);
 	}
     // Include sanity checks on incoming packet length
-    if (dataLen >= (int)(sizeof(ProxyHeader) + sizeof(ProxySicb) + 1) && offset <= dataLen)
-    {
-		Status sts = LS_SUCCESS;
+    if (dataLen >= (int)(sizeof(ProxyHeader) + sizeof(ProxySicb) + 1) && offset <= dataLen) {
+		LonStatusCode sts = LonStatusNoError;
 		dataLen -= offset;
-		if (service == IzotServiceUnacknowledged)
-		{
+		if (service == IzotServiceUnacknowledged) {
 			PktCtrl ctrl = alt ? PKT_ALTPATH|PKT_PROXY : PKT_PROXY;
 			sts = AllocSendUnackd(ctrl, appReceiveParamPtr->reqId, &addr, code, pData[offset], dataLen, &pData[offset+1]);
-		}
-		else if (dataLen+1 > gp->tsaOutBufSize)
-		{
-			sts = LS_FAILURE;
-		}
-		else
-		{						
+		} else if (dataLen+1 > gp->tsaOutBufSize) {
+			sts = LonStatusInvalidBufferLength;
+		} else {						
 			TSASendParam   *tsaSendParamPtr = QueueTail(outQPtr);
 			APDU		   *apduSendPtr 	= (APDU *)(tsaSendParamPtr + 1);
 	
@@ -390,13 +340,12 @@ Status ProcessLTEP(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr)
 			tsaSendParamPtr->apduSize 		= dataLen+1;
 			apduSendPtr->code		  		= code;
 			tsaSendParamPtr->destAddr 		= addr;
-			EnQueue(outQPtr);
+			QueueWrite(outQPtr);
 		}
-		if (sts == LS_FAILURE)
-		{
+		if (sts != LonStatusNoError) {
 			SendResponse(appReceiveParamPtr->reqId, LT_ENHANCED_PROXY_FAILURE, sizeof(proxyCount), &proxyCount);
 		}
 	}
-	return LS_SUCCESS;
+	return LonStatusNoError;
 }
 #endif // ENABLE_PROXY_REPEATING
