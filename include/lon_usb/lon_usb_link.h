@@ -223,7 +223,10 @@ typedef struct LON_PACKED UsbNiExtendedMessage {
 // LON USB frame header type enumeration
 typedef enum {
 	FRAME_SYNC_ONLY,
-	FRAME_CODE_PACKET
+	FRAME_CODE_PACKET,
+#if PARKER_MOD
+	FRAME_INVALID_TYPE = 0xFFFFFFFF		// force the enum to be 4 bytes wide	
+#endif // PARKER_MOD
 } LonUsbFrameHeaderType;
 
 // LON USB frame commands -- must match the MIP/U50 implementation
@@ -290,7 +293,11 @@ typedef enum {
 	RF_900
 } LonUsbIfaceModel;
 
+#if PARKER_MOD
+#define MAX_IFACE_MODELS 2		// Parker Mod: only U60 FT and U60 TP-1250 ( because i'm not sure which ones are used in the project )
+#else
 #define MAX_IFACE_MODELS 6
+#endif // PARKER_MOD
 
 // LON USB link-layer interface configuration structure
 typedef struct LonUsbIfaceConfig {
@@ -312,20 +319,25 @@ typedef struct LonUsbIfaceConfig {
 #endif	// OS_IS(LINUX_KERNEL)
 
 // LON USB interface configurations indexed by LonUsbIfaceModel
+#if PARKER_MOD
+LonUsbIfaceConfig lon_usb_iface_configs[] = {
+#else // PARKER_MOD
 static LonUsbIfaceConfig lon_usb_iface_configs[] = {
+#endif // PARKER_MOD
 	// U10 FT Rev A/B
-	{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
+	//{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
 	// U10 FT Rev C
-	{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
+	//{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
 	// U20 PL
-	{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
+	//{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
 	// U60 FT
 	{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
 	// U60 TP-1250
 	{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
 	// U70 PL
-	{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false}
+	//{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false}
 };
+//#endif // PARKER_MOD
 
 // LON USB link state structure
 typedef struct LonUsbLinkState {

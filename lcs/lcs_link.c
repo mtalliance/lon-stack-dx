@@ -59,6 +59,7 @@ typedef struct {
 } LonNiDef;
 
 // LON network interface definition array
+
 LonNiDef lonNi[NUM_LON_NI] = {
 #if !PRODUCT_IS(SLB)
 	 {"LON1", "/dev/ttyACM0", -1, LON_USB_OPEN_LAYER2, U60_FT, false, false, false, {0}, false}

@@ -233,6 +233,7 @@ static void EventNormalConnecting(void *data)
  *   Network dependent services can be started here. These services
  *   can be stopped on disconnection and reset-to-provisioning events.
  */ 
+#if !PARKER_MOD
 static void EventNormalConnected(void *data)
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -258,7 +259,7 @@ static void EventNormalConnected(void *data)
     SetLsAddressFromIpAddr();
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+#endif // PARKER_MOD
 
 /*
  * Handles a normal provisioned network disconnection event.
@@ -271,7 +272,8 @@ static void EventNormalConnected(void *data)
  *   when the station interface is diconnected from the home access point.
  *   Network dependent services not required while disconnected can be 
  *   stopped here.
- */ 
+ */
+#if !PARKER_MOD 
 static void EventNormalUserDisconnect(void *data)
 {
 #if LINK_IS(ETHERNET) || LINK_IS(WIFI)
@@ -279,7 +281,7 @@ static void EventNormalUserDisconnect(void *data)
     CAL_Printf("Disconnected\r\n");
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+#endif // PARKER_MOD
 
 /*
  * Handles a network link lost event.
@@ -290,7 +292,8 @@ static void EventNormalUserDisconnect(void *data)
  * Notes:
  *   Handle a connection lost event that occurs for Wi-Fi when the
  *   station interface link to the home access point is lost.
- */ 
+ */
+#if !PARKER_MOD 
 static void EventNormalLinkLost(void *data)
 {
 #if LINK_IS(ETHERNET) || LINK_IS(WIFI)
@@ -298,7 +301,7 @@ static void EventNormalLinkLost(void *data)
     CAL_Printf("Link Lost\r\n");
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+#endif // PARKER_MOD
 
 /*
  * Handles a DHCP address assignment event.
@@ -309,12 +312,13 @@ static void EventNormalLinkLost(void *data)
  * Notes:
  *   Handle a possible IP address change after the DHCP-assigned
  *   address is renewed.
- */ 
+ */
+#if !PARKER_MOD 
 static void EventNormalDHCPRenew(void *data)
 {
     CAL_Printf("DHCP renew\r\n");
 }
-
+#endif // PARKER_MOD
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
@@ -427,6 +431,7 @@ int common_event_handler(int event, void *data)
  * Returns:
  *  None
  */
+#if !PARKER_MOD
 static void InitModules()
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -451,7 +456,7 @@ static void InitModules()
     set_reconnect_iter(5);
 #endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 }
-
+#endif // PARKER_MOD
 /*
  * Starts the IP link.
  * Parameters:
@@ -766,7 +771,9 @@ void CalSend(uint32_t port, IzotByte* addr, IzotByte* pData,
  */
 int CalReceive(IzotByte* pData, IzotByte* pSourceAddr)
 {
+#if !PARKER_MOD
     uint16_t bufferSize;
+#endif // PARKER_MOD
     int dataLength = 0;
 #if PROTOCOL_IS(LON_IP)
 #if PLATFORM_IS(FRTOS_ARM_EABI)

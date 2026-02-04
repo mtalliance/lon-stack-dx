@@ -301,7 +301,11 @@ LonStatusCode HalStorageInfo(size_t *offset, size_t *region_size,
     *number_of_regions  = 0;
     *erase_required     = false;
     *erase_value        = 0;
+#if PARKER_MOD
+    persistentMemError  = LonStatusPersistentDataFailure;
+#else // PARKER_MOD
     persistentMemError  = LonStatusPersistentDataFailure
+#endif  // PARKER_MOD
     OsalPrintError(persistentMemError, "HalStorageInfo: No persistent storage driver available");
 #endif
 

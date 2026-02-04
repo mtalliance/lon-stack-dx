@@ -35,8 +35,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#if !PARKER_MOD
 #include <termios.h>
-
+#endif // PARKER_MOD
 #include "izot/IzotApi.h"
 #include "lon_usb/lon_usb_link.h"
 

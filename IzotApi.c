@@ -411,7 +411,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotSendResponse(
 IZOT_EXTERNAL_FN LonStatusCode IzotReleaseCorrelator(const IzotCorrelator correlator)
 {
     #if PARKER_MOD
-    UNUSED(IzotReleaseCorrelator)
+    UNUSED(IzotReleaseCorrelator);
     #endif // PARKER_MOD
     return LonStatusInvalidOperation;
 }
@@ -2017,7 +2017,7 @@ LonStatusCode IzotMemoryRead(const unsigned address, const unsigned size, void* 
     UNUSED(address);
     UNUSED(size);
     UNUSED(pData);
-    #ENDIF // PARKER_MOD
+    #endif // PARKER_MOD
 
     return LonStatusInvalidOperation;
 #endif   /* LON_DMF_ENABLED */
@@ -2062,7 +2062,7 @@ LonStatusCode IzotMemoryWrite(const unsigned address, const unsigned size, const
     UNUSED(address);
     UNUSED(size);
     UNUSED(pData);
-    #ENDIF // PARKER_MOD
+    #endif // PARKER_MOD
 
     return LonStatusInvalidOperation;
 #endif  /* LON_DMF_ENABLED */

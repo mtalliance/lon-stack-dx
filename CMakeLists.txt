@@ -135,7 +135,10 @@ target_link_libraries(lon_stack_dx PUBLIC Threads::Threads)
 # Set build defaults at compile time
 target_compile_definitions(lon_stack_dx
     PRIVATE
-    OS_ID=OS_ID_LINUX
+#PARKER START
+    #OS_ID=OS_ID_LINUX
+    OS_ID=OS_ID_FREERTOS
+#PARKER END
     LINK_ID=LINK_ID_USB
     PROTOCOL_ID=PROTOCOL_ID_LON_NATIVE
     ISI_ID=ISI_ID_NO_ISI
@@ -198,11 +201,16 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lon_stack_dx
 )
 
+
 # Example executable (optional): builds example/LonStackExample1.c with main()
-add_executable(lon_stack_example1
-    example/LonStackExample1.c
-)
-target_link_libraries(lon_stack_example1 PRIVATE lon_stack_dx)
-target_compile_definitions(lon_stack_example1 PRIVATE INCLUDE_EXAMPLE_MAIN)
+# PARKER_START  commented out because we don't use this example ( we will generate our own)
+#add_executable(lon_stack_example1
+#    example/LonStackExample1.c
+#)
+
+#target_link_libraries(lon_stack_example1 PRIVATE lon_stack_dx)
+
+# target_compile_definitions(lon_stack_example1 PRIVATE INCLUDE_EXAMPLE_MAIN)
 # Ensure the example's own headers are visible
-target_include_directories(lon_stack_example1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/example)
+#target_include_directories(lon_stack_example1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/example)
+# PARKER_END

@@ -51,8 +51,10 @@ extern "C"
 #include <sys/time.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/ioctl.h>
-#include <termios.h>
+#if !PARKER_MOD
+//#include <sys/ioctl.h>
+//#include <termios.h>
+#endif // PARKER_MOD
 #endif  // OS_IS(LINUX) || OS_IS(FREERTOS)
 
 // Maximum number of milliseconds for OsalSleep()
