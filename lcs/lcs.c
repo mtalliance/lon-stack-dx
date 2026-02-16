@@ -112,6 +112,8 @@ LonStatusCode LCS_Init(IzotResetCause cause)
  */
 LonStatusCode LCS_Service()
 {
+	static uint16_t SendServiceMgs = 10;
+
 	LonStatusCode status = LonStatusNoError;
 	int stackNum;
     for (stackNum = 0; stackNum < NUM_STACKS; stackNum++) {
@@ -200,6 +202,13 @@ LonStatusCode LCS_Service()
 			}
 			SetLonTimer(&gp->checksumTimer, CHECKSUM_TIMER_VALUE);
 		}
+
+       if(SendServiceMgs > 0)
+        {
+            SendServiceMgs--;
+            if(SendServiceMgs == 0)
+                gp->manualServiceRequest = TRUE;
+        }    
 	}
 	return status;
 }

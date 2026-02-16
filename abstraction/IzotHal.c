@@ -890,6 +890,13 @@ LonStatusCode HalGetMacAddress(unsigned char *mac)
 #elif PROCESSOR_IS(MC200)
     return (wlan_get_mac_address(mac) ? LonStatusDeviceUniqeIdNotAvailable : LonStatusNoError);
 #else
+
+#if PARKER_MOD
+    uint8_t* pNeuronID = GetNeuronID_Pointer();
+    memcpy(mac, pNeuronID, IZOT_PROGRAM_ID_LENGTH);
+    return LonStatusNoError;
+#endif
+    
     return LonStatusDeviceUniqeIdNotAvailable;
 #endif
 }
