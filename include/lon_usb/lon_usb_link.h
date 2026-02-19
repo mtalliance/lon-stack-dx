@@ -279,22 +279,28 @@ typedef struct LON_PACKED LonUsbQueueBuffer {
 // LON USB interface type enumeration
 typedef enum {
 	LON_USB_INTERFACE_U50,
+#if !PARKER_MOD
 	LON_USB_INTERFACE_U61
+#endif
 } LonUsbIfaceType;
 
 // LON USB interface model enumeration
 typedef enum {
+#if !PARKER_MOD
 	U10_FT_AB,
 	U10_FT_C,
 	U20_PL,
+#endif    
 	U60_FT,
+#if !PARKER_MOD
 	U60_TP_1250,
 	U70_PL,
 	RF_900
+#endif   
 } LonUsbIfaceModel;
 
 #if PARKER_MOD
-#define MAX_IFACE_MODELS 2		// Parker Mod: only U60 FT and U60 TP-1250 ( because i'm not sure which ones are used in the project )
+#define MAX_IFACE_MODELS 1		// Parker Mod: only U60 FT and U60 TP-1250 ( because i'm not sure which ones are used in the project )
 #else
 #define MAX_IFACE_MODELS 6
 #endif // PARKER_MOD
@@ -333,7 +339,7 @@ static LonUsbIfaceConfig lon_usb_iface_configs[] = {
 	// U60 FT
 	{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
 	// U60 TP-1250
-	{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
+	//{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
 	// U70 PL
 	//{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false}
 };

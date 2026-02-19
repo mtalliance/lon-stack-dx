@@ -11,6 +11,8 @@
  * Notes:   The functions in this file support LON data links using a
  *          LON USB network interface such as the U10 or U60.
  */
+#if !PARKER_MOD
+
 
 #include "lcs/lcs_link.h"
 
@@ -512,3 +514,4 @@ void LKFetchXcvrPl(int index)
 }
 
 #endif  // !LINK_IS(ETHERNET) && !LINK_IS(WIFI)
+#endif //!PARKER_MOD
