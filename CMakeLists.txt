@@ -66,8 +66,8 @@ set(LON_STACK_DX_SOURCES
 #PARKER_START
     #lon_udp/ipv4_to_lon_udp.c
     #lon_udp/lon_udp_mapping_util.c
+    #lon_usb/lon_usb_link.c
 #PARKER_END
-    lon_usb/lon_usb_link.c
     persistence/storage_persistence.c
     persistence/lon_persistence.c
 )

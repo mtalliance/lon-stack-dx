@@ -16,9 +16,7 @@
 extern "C" {
 #endif
 
-#if PARKER_MOD
 #define UNUSED(x)  (void)x
-#endif // PARKER_MOD
  
 /*****************************************************************
  * Section: Globals
@@ -410,9 +408,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotSendResponse(
  */
 IZOT_EXTERNAL_FN LonStatusCode IzotReleaseCorrelator(const IzotCorrelator correlator)
 {
-    #if PARKER_MOD
     UNUSED(IzotReleaseCorrelator);
-    #endif // PARKER_MOD
     return LonStatusInvalidOperation;
 }
 
@@ -1594,9 +1590,7 @@ unsigned IzotGetCurrentDatapointSize(const unsigned index)
  */
 void IzotReset(const IzotResetNotification* const pResetNotification)
 {
-   #if PARKER_MOD
    UNUSED(pResetNotification);
-   #endif // PARKER_MOD
    
     if (izot_reset_handler) {
 		izot_reset_handler();
@@ -2013,12 +2007,9 @@ LonStatusCode IzotMemoryRead(const unsigned address, const unsigned size, void* 
     return result;
 #else
 
-    #if PARKER_MOD
     UNUSED(address);
     UNUSED(size);
     UNUSED(pData);
-    #endif // PARKER_MOD
-
     return LonStatusInvalidOperation;
 #endif   /* LON_DMF_ENABLED */
 }
@@ -2058,12 +2049,9 @@ LonStatusCode IzotMemoryWrite(const unsigned address, const unsigned size, const
     return result;
 #else
 
-    #if PARKER_MOD
     UNUSED(address);
     UNUSED(size);
     UNUSED(pData);
-    #endif // PARKER_MOD
-
     return LonStatusInvalidOperation;
 #endif  /* LON_DMF_ENABLED */
 }

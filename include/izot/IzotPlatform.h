@@ -1320,12 +1320,10 @@
 // TBD: Create temporary stubs for a LON USB link interface.
 // Replace these with actual implementations when available.
 #if LINK_IS(USB)
-#if PARKER_MOD
-#define OpenLonLink OpenLonUsbLink
-#define CloseLonLink CloseLonUsbLink
-#define ReadLonLinkMsg  ReadLonUsbMsg
-#define WriteLonLinkMsg WriteLonUsbMsg
-#endif // PARKER_MOD
+//#define OpenLonLink OpenLonUsbLink
+//#define CloseLonLink CloseLonUsbLink
+//#define ReadLonLinkMsg  ReadLonUsbMsg
+//#define WriteLonLinkMsg WriteLonUsbMsg
 #elif LINK_IS(ETHERNET) || LINK_IS(WIFI)
 // No special definitions required for Ethernet or Wi-Fi UDP/IP links.  
 // Equivalent functions are defined in LsUDPReset(), LsUDPSend(), 

@@ -352,11 +352,7 @@ LonStatusCode IzotPersistentSegRestore(IzotPersistentSegType persistent_seg_type
     if (IzotPersistentSegIsInTransaction(persistent_seg_type)) {
         status = LonStatusPersistentDataFailure;
     } else {
-#if PARKER_MOD
-        IzotPersistentSegOpenForRead(persistent_seg_type);
-#else // PARKER_MOD
-        IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistent_seg_type);
-#endif // PARKER_MOD
+        /*IzotPersistentSegType returnedSegType = */IzotPersistentSegOpenForRead(persistent_seg_type);
         memset(&hdr, 0, sizeof(hdr));
         if (persistent_seg_type != IzotPersistentSegUnassigned) {
             if (IzotPersistentSegRead(persistent_seg_type, 0, sizeof(hdr), &hdr) != 0) {

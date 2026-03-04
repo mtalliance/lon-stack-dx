@@ -27,7 +27,6 @@
     #include <unistd.h>
 #endif
 
-#if PARKER_MOD
 extern void DEBUG_LonStackInfo(const char *format, ...);
 
 #ifdef LONSTACK_USE_DEBUG_MENU
@@ -35,7 +34,6 @@ extern void DEBUG_LonStackInfo(const char *format, ...);
 #else
 #define DEBUG_LonStkInfo(S, ...)
 #endif
-#endif // PARKER_MOD
 
 /*****************************************************************
  * Section: Semaphore Lock Management Function Definitions
@@ -356,11 +354,8 @@ LonStatusCode OsalSleep(unsigned int msecs)
     msleep(msecs);          // Sleeps for the given number of milliseconds
 #elif OS_IS(FREERTOS)
 
-    #if PARKER_MOD
     os_thread_sleep(os_msec_to_ticks(msecs));
-    #else // PARKER_MOD
-    vTaskDelay(pdMS_TO_TICKS(msecs)); // Uses the FreeRTOS tick conversion macro
-    #endif // PARKER_MOD
+//    vTaskDelay(pdMS_TO_TICKS(msecs)); // Uses the FreeRTOS tick conversion macro
 #elif PLATFORM_IS(RPI) || PLATFORM_IS(RPI_PICO)
     delay(msecs);
 #else
@@ -435,20 +430,14 @@ void OsalFreeMemory(void *buf)
   */
  static void OsalFormatErrorString(char *buffer, size_t buffer_len, LonStatusCode status_code, const char *status_string, va_list args)
 {
-  #if PARKER_MOD
+//    uint32_t time = OsalGetTickCount()*1000/OsalGetTicksPerSecond();
     if (status_code == LonStatusNoError) {
         snprintf(buffer, buffer_len, "Info: ");
+//        snprintf(buffer, buffer_len, "%s.%.3d Info: ", OsalGetDateTimeString(), time % 1000);
     } else {
         snprintf(buffer, buffer_len, "Error %d: ", status_code);
+//        snprintf(buffer, buffer_len, "%s.%.3d Error %d: ", OsalGetDateTimeString(), time % 1000, status_code);
     }
-  #else // PARKER_MOD
-    uint32_t time = OsalGetTickCount()*1000/OsalGetTicksPerSecond();
-    if (status_code == LonStatusNoError) {
-        snprintf(buffer, buffer_len, "%s.%.3d Info: ", OsalGetDateTimeString(), time % 1000);
-    } else {
-        snprintf(buffer, buffer_len, "%s.%.3d Error %d: ", OsalGetDateTimeString(), time % 1000, status_code);
-    }
-#endif // PARKER_MOD    
     vsnprintf(buffer + strlen(buffer), buffer_len - strlen(buffer), status_string, args);
 }
 
@@ -504,11 +493,7 @@ void OsalPrintSysError(LonStatusCode status_code, char *status_string, ...)
 #if OS_IS(LINUX)
     fprintf(stderr, "%s (strerror(errno))\n", formatted, strerror(errno));
 #elif OS_IS(FREERTOS)
-#if !PARKER_MOD 
-    printf("%s\n", formatted);
-#else // PARKER_MOD
     DEBUG_LonStkInfo("%s\n", formatted);
-#endif // PARKER_MOD
 #else
     // Implement as needed
     #pragma message("Implement OS-dependent definition of OsalPrintSysError()")
@@ -529,14 +514,12 @@ void OsalPrintSysError(LonStatusCode status_code, char *status_string, ...)
  */
 void OsalPrintError(LonStatusCode status_code, char *status_string, ...)
 {
- #if !PARKER_MOD 
     // Log to non-volatile memory if the error code has changed to avoid wearing
     // out flash memory with redundant values
     if (status_code != LonStatusNoError && eep->errorLog != status_code){
         eep->errorLog = status_code;
         LCS_WritePersistentNetworkImage();
     }
-#endif // PARKER_MOD
 
     if (logLevel < LOG_ERROR)
         return;
@@ -551,11 +534,7 @@ void OsalPrintError(LonStatusCode status_code, char *status_string, ...)
     fprintf(stderr, "%s\n", formatted);
 #elif OS_IS(FREERTOS)
 
- #if !PARKER_MOD 
-    printf("%s\n", formatted);
-#else // PARKER_MOD
     DEBUG_LonStkInfo("%s\n", formatted);
-#endif // PARKER_MOD
 #else
     // Implement as needed
     #pragma message("Implement OS-dependent definition of OsalPrintError()")
@@ -587,11 +566,7 @@ void OsalPrintDebug(LonStatusCode status_code, char *status_string, ...)
 #if OS_IS(LINUX)
     fprintf(stderr, "%s\n", formatted);
 #elif OS_IS(FREERTOS)
-#if !PARKER_MOD 
-    printf("%s\n", formatted);
-#else // PARKER_MOD
     DEBUG_LonStkInfo("%s\n", formatted);
-#endif // PARKER_MOD
 #else
     // Implement as needed
     #pragma message("Implement OS-dependent definition of OsalPrintDebug()")
@@ -623,11 +598,7 @@ void OsalPrintTrace(LonStatusCode status_code, char *status_string, ...)
 #if OS_IS(LINUX)
     fprintf(stderr, "%s\n", formatted);
 #elif OS_IS(FREERTOS)
-#if !PARKER_MOD 
-    printf("%s\n", formatted);
-#else // PARKER_MOD
     DEBUG_LonStkInfo("%s\n", formatted);
-#endif // PARKER_MOD
 #else
     // Implement as needed
     #pragma message("Implement OS-dependent definition of OsalPrintTrace()")

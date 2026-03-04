@@ -35,9 +35,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#if !PARKER_MOD
-#include <termios.h>
-#endif // PARKER_MOD
+//#include <termios.h>
 #include "izot/IzotApi.h"
 #include "lon_usb/lon_usb_link.h"
 
@@ -188,7 +186,6 @@ static void IdentifyLonNi(int iface_index);
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-#if !PARKER_MOD 
 LonStatusCode OpenLonUsbLink(char *lon_dev_name, char *usb_dev_name,
 					int *iface_index, LonUsbOpenMode iface_mode,
 					LonUsbIfaceModel lon_usb_iface_model)
@@ -265,7 +262,6 @@ LonStatusCode OpenLonUsbLink(char *lon_dev_name, char *usb_dev_name,
 			lon_dev_name, usb_dev_name, *iface_index);
 	return status;
 };
-#endif
 
 /*
  * Starts the link for a specified LON USB network interface.
@@ -374,7 +370,6 @@ static LonStatusCode ResetUplinkState(int iface_index)
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-#if !PARKER_MOD
 static LonStatusCode RequestNiUid(int iface_index)
 {
 	LonUsbLinkState *state = GetIfaceState(iface_index);
@@ -403,7 +398,6 @@ static LonStatusCode RequestNiUid(int iface_index)
 			iface_index, state->uid_retries);
 	return code;
 }
-#endif
 
 /*
  * Sets the LON interface layer mode to layer 2 or layer 5.
@@ -412,7 +406,6 @@ static LonStatusCode RequestNiUid(int iface_index)
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-#if !PARKER_MOD
 static LonStatusCode SetNiLayerMode(int iface_index)
 {
 	LonUsbLinkState *state = GetIfaceState(iface_index);
@@ -428,7 +421,6 @@ static LonStatusCode SetNiLayerMode(int iface_index)
 	OsalPrintDebug(LonStatusNoError, "Sent LON interface layer mode request for interface index %d", iface_index);
 	return code;
 }
-#endif
 
 /*****************************************************************
  * Section: Downlink Function Definitions
@@ -1272,19 +1264,12 @@ static LonStatusCode ProcessUplinkBytes(int iface_index, uint8_t *chunk, size_t 
 			chunk++; chunk_size--;
 			break;
 		case UPLINK_FRAME_CODE:
-#if PARKER_MOD
-           {
-#else
 			if (state->lon_usb_iface_model == LON_USB_INTERFACE_U50) {
-#endif
 				// MIP/U50: save frame code byte fields
 				state->uplink_buffer.frame_header.frame_code.ack = *chunk & 0x10 ? 1 : 0;
 				state->uplink_buffer.frame_header.frame_code.sequence_num = (*chunk >> 5) & 0x07;
 				state->uplink_buffer.frame_header.frame_code.frame_cmd = *chunk & 0x0F;
 				state->uplink_state = UPLINK_FRAME_PARAMETER;
-#if PARKER_MOD
-            }
-#else            
 			} else {
 				// MIP/U61: frame code byte is always 0
 				if (*chunk == 0) {
@@ -1299,7 +1284,7 @@ static LonStatusCode ProcessUplinkBytes(int iface_index, uint8_t *chunk, size_t 
 					state->uplink_frame_error = TRUE;
 				}
 			}
-#endif
+
 			break;
 		case UPLINK_FRAME_PARAMETER:
 			// For MIP/U50 only: save frame parameter byte

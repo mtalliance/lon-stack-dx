@@ -48,8 +48,11 @@
 #define ntoh32(s) (s)
 #endif
 
-#if !PARKER_MOD
-static uint16_t EndianSwap16(uint16_t in) {
+#include "cmsis_gcc.h"
+#define EndianSwap16(x)        __REV16(x) 
+#define EndianSwap32(x)        __REV(x) 
+
+/*static uint16_t EndianSwap16(uint16_t in) {
 	return (in >> 8) | (in << 8);
 }
 
@@ -59,5 +62,6 @@ static uint32_t EndianSwap32(uint32_t in) {
            ((in << 8)  & 0x00FF0000) |
            ((in << 24) & 0xFF000000);
 }
-#endif // PARKER_MOD
+*/
+
 #endif // _IZOT_ENDIAN_H

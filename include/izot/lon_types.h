@@ -550,13 +550,9 @@ typedef IZOT_ENUM_BEGIN(IzotServiceLedPhysicalState) {
 #define MAX_DATA_SIZE 255
 
 // Maximum size of message on the wire (might be over sized a byte or two for safety)
-#if PARKER_MOD  // Prevents redefinition warning
-#ifndef MAX_PDU_SIZE
+#ifndef MAX_PDU_SIZE // Prevents redefinition warning
 #define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
 #endif
-#else // PARKER_MOD
-#define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
-#endif // PARKER_MOD
 
 #define NUM_ADDR_TBL_ENTRIES   254     /* # of address table entries; maximum supported value is 255 */
 

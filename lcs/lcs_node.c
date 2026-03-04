@@ -949,10 +949,7 @@ void MsgCompletes(LonStatusCode status, MsgTag tag)
 
 void DoApp(IzotBool isOnline) 
 {
-    #if PARKER_MOD
     (void)isOnline;
-    #endif // PARKER_MOD
-    
     MsgIn* msg_in = NULL;
     RespIn* rsp_in = NULL;
     

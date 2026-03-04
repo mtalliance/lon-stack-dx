@@ -1124,13 +1124,9 @@ void HandleNmeQueryLsAddrMapping(APPReceiveParam *appReceiveParamPtr, APDU *apdu
     }
 
     reportLsAddrMapping.subcommand = apduPtr->data[0];
-#if PARKER_MOD  // AR Test copy back from previous version TODO see what it do  
-    reportLsAddrMapping.AnnouncePeriod = 100;
-    reportLsAddrMapping.AgePeriod = 100;
-#else // PARKER_MOD
-    reportLsAddrMapping.AnnouncePeriod = AnnounceTimer;
-    reportLsAddrMapping.AgePeriod = AddrMappingAgingTimer;
-#endif // PARKER_MOD    
+    reportLsAddrMapping.AnnouncePeriod = 2000; //AnnounceTimer; this is not defined in the current implementation, so return a default value.
+    reportLsAddrMapping.AgePeriod = 1000; //AddrMappingAgingTimer; this is not defined in the current implementation, so return a default value.
+    
     SendResponse(appReceiveParamPtr->reqId, NM_resp_success | NM_EXPANDED,
     sizeof(reportLsAddrMapping), (IzotByte*) &reportLsAddrMapping);
 }

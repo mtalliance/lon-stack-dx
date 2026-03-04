@@ -32,6 +32,8 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
+#include "abstraction/vldv.h"   // Maybe we need to change this by something else, that is in the 3.5.3 version of the stack
+#include "lcs/lcs_link.h"       // for L2Frame definition; replace with appropriate header if needed
 
 #include "izot/IzotPlatform.h" // Project-specific configuration
 
@@ -301,11 +303,7 @@ LonStatusCode HalStorageInfo(size_t *offset, size_t *region_size,
     *number_of_regions  = 0;
     *erase_required     = false;
     *erase_value        = 0;
-#if PARKER_MOD
     persistentMemError  = LonStatusPersistentDataFailure;
-#else // PARKER_MOD
-    persistentMemError  = LonStatusPersistentDataFailure
-#endif  // PARKER_MOD
     OsalPrintError(persistentMemError, "HalStorageInfo: No persistent storage driver available");
 #endif
 
@@ -681,8 +679,10 @@ LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out)
     // int fd = open(usb_dev_name, ...);
     // if (fd < 0) return -1;
     // return fd;
-    status = LonStatusNotImplemented;
-    OsalPrintError(status, "HalOpenUsb: Implementation missing for the USB interface on FreeRTOS");
+//    status = LonStatusNotImplemented;
+//    OsalPrintError(status, "HalOpenUsb: Implementation missing for the USB interface on FreeRTOS");
+    status = LonStatusNoError;
+    OsalPrintError(status, "HalOpenUsb: Not needed on MT823");
     return status;
 #else
     // Placeholder: integrate with platform-specific open API when available.
@@ -762,9 +762,27 @@ LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_wri
     //     if (rc > 0) { total += (size_t)rc; continue; }
     //     if (rc < 0) { if (bytes_written) *bytes_written = total; return LonStatusWriteFailed; }
     // }
-    if (bytes_written) *bytes_written = 0;
-    OsalPrintError(LonStatusWriteFailed, "HalWriteUsb() not implemented");
-    return LonStatusWriteFailed;
+ 
+    L2Frame sicb;
+
+    if (fd < 0 || !buf || len == 0 || !bytes_written){
+        OsalPrintError(LonStatusInvalidParameter, "HalWriteUsb invalid parameter");
+        return LonStatusInvalidParameter;
+    }
+
+    sicb.len = len;
+    memcpy(sicb.pdu, buf, (size_t)sicb.len);
+
+    if(WriteLonLink(&sicb) != LDV_OK)
+    {
+        *bytes_written = 0;
+        return LonStatusWriteFailed;
+    }
+
+    *bytes_written = len;
+    OsalPrintTrace(LonStatusNoError, "Write %zd bytes", len);
+    return LonStatusNoError;
+
 #else
     // Placeholder: integrate with platform-specific write API when available.
     // size_t total = 0; const uint8_t *p = (const uint8_t*)buf;
@@ -799,6 +817,8 @@ LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_wri
  *   or implement code to asynchronously call LonUsbFeedRx() to feed data
  *   received from the LON USB network interface into the RX ring buffer.
  */
+extern LdvCode_e ReadLonLink(void* pBuffer);
+
 LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
 {
 #if OS_IS(LINUX)
@@ -825,7 +845,42 @@ LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
     // implement a non-blocking read from the LON USB network interface here,
     // or implement code to asynchronously call LonUsbFeedRx() to feed data 
     // received from the LON USB network interface into the RX ring buffer
-    #pragma message("Optional: implement OS-dependent definition of HalReadUsb()")
+    L2Frame sicb;
+
+
+    if (fd < 0 || !buf || len == 0 || !bytes_read) {
+        OsalPrintError(LonStatusInvalidParameter, "HalReadUsb invalid parameter");
+        return LonStatusInvalidParameter;
+    }
+
+  //  *bytes_read = read(fd, buf, len);
+
+    if(ReadLonLink(&sicb) != LDV_OK)
+    {
+        return LonStatusNoMessageAvailable;
+    }
+
+    *bytes_read = sicb.len;
+    memcpy(buf, sicb.pdu, sicb.len);
+
+    if (*bytes_read < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return LonStatusNoMessageAvailable;
+        }
+        OsalPrintError(LonStatusReadFailed, "Read error %d", errno);
+        return LonStatusReadFailed;
+    }
+    if (*bytes_read == 0) {
+        OsalPrintError(LonStatusInterfaceError, "Read returned 0 bytes; device may be disconnected");
+        return LonStatusInterfaceError;
+    }
+    OsalPrintTrace(LonStatusNoError, "Read %zd bytes", *bytes_read);
+    return LonStatusNoError;
+
+
+
+
+    //#pragma message("Optional: implement OS-dependent definition of HalReadUsb()")
     return LonStatusNoMessageAvailable;
 #else
     // Implement a non-blocking read from the LON USB network interface here,
@@ -891,11 +946,9 @@ LonStatusCode HalGetMacAddress(unsigned char *mac)
     return (wlan_get_mac_address(mac) ? LonStatusDeviceUniqeIdNotAvailable : LonStatusNoError);
 #else
 
-#if PARKER_MOD
     uint8_t* pNeuronID = GetNeuronID_Pointer();
     memcpy(mac, pNeuronID, IZOT_PROGRAM_ID_LENGTH);
     return LonStatusNoError;
-#endif
     
     return LonStatusDeviceUniqeIdNotAvailable;
 #endif
