@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include "abstraction/vldv.h"   // Maybe we need to change this by something else, that is in the 3.5.3 version of the stack
 #include "lcs/lcs_link.h"       // for L2Frame definition; replace with appropriate header if needed
-
 #include "izot/IzotPlatform.h" // Project-specific configuration
 
 // Forward declare sync() for platforms that need it
@@ -121,6 +120,10 @@ static const char *iface = "eth0"; // Hardware dependent IP interface name
 #if PROCESSOR_IS(MC200)
 static mdev_t *flashFd = NULL; // File descriptor for the flash device
 #endif // PROCESSOR_IS(MC200)
+
+
+extern LdvCode_e U60FT_WriteUSB_Data(const void* pSrc, size_t Count, size_t* BytesWritten);
+extern LdvCode_e U60FT_ReadUSB_Data(void* pDest, size_t Count, size_t* pActual);
 
 /*****************************************************************
  * Section: Storage Function Definitions
@@ -625,79 +628,13 @@ LonStatusCode HalReadStorageSegment(
 #endif
 }
 
-/*****************************************************************
- * Section: USB TTY Interface Function Definitions
- *****************************************************************/
-LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out)
-{
-    LonStatusCode status = LonStatusNoError;
-    if (!usb_dev_name || ldisc >= NR_LDISCS) {
-        *usb_fd_out = -1;
-        status = LonStatusInvalidParameter;
-        OsalPrintError(status, "HalOpenUsb: Invalid parameters");
-        return status;
-    }
-#if OS_IS(LINUX)
-    *usb_fd_out = open(usb_dev_name, O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (*usb_fd_out < 0) {
-        status = LonStatusInterfaceError;
-        OsalPrintError(status, "HalOpenUsb: Cannot open USB device %s (errno %d)", usb_dev_name, errno);
-        return status;
-    }
 
-    // Set custom line discipline if requested
-    if (ldisc >= 0) {
-        if (ioctl(*usb_fd_out, TIOCSETD, &ldisc) < 0) {
-            close(*usb_fd_out);
-            status = LonStatusInterfaceError;
-            OsalPrintError(status, "HalOpenUsb: Cannot set line discipline %d on %s (errno %d)", ldisc, usb_dev_name, errno);
-            return status;
-        }
-    }
-
-    // Set raw mode
-    struct termios tio;
-    if (tcgetattr(*usb_fd_out, &tio) < 0) {
-        close(*usb_fd_out);
-        status = LonStatusInterfaceError;
-        OsalPrintError(status, "HalOpenUsb: Cannot get attributes for %s (errno %d)", usb_dev_name, errno);
-        return status;
-    }
-    cfmakeraw(&tio);
-    tio.c_cc[VMIN] = 1;
-    tio.c_cc[VTIME] = 0;
-    if (tcsetattr(*usb_fd_out, TCSANOW, &tio) < 0) {
-        close(*usb_fd_out);
-        status = LonStatusInterfaceError;
-        OsalPrintError(status, "HalOpenUsb: Cannot set raw mode on %s (errno %d)", usb_dev_name, errno);
-        return status;
-    }
-    return LonStatusNoError;
-#elif OS_IS(FREERTOS)
-    // For FreeRTOS, assume descriptor is a UART-like driver and not standard POSIX fd.
-    // Placeholder: integrate with platform-specific open API when available.
-    // int fd = open(usb_dev_name, ...);
-    // if (fd < 0) return -1;
-    // return fd;
-//    status = LonStatusNotImplemented;
-//    OsalPrintError(status, "HalOpenUsb: Implementation missing for the USB interface on FreeRTOS");
-    status = LonStatusNoError;
-    OsalPrintError(status, "HalOpenUsb: Not needed on MT823");
-    return status;
-#else
-    // Placeholder: integrate with platform-specific open API when available.
-    status = LonStatusNotImplemented;
-    OsalPrintError(status, "HalOpenUsb: Implementation missing for the USB interface on this platform");
-    return status;
-#endif
-}
-
+/*
 void HalCloseUsb(int fd)
 {
     if (fd >= 0)
         close(fd);
-}
-
+}*/
 /*
  * Writes data to the LON USB network interface.
  * Parameters:
@@ -712,7 +649,7 @@ void HalCloseUsb(int fd)
  *   For Linux, it retries on EINTR and EAGAIN. For partial progress followed
  *   by error, the already-written byte count is returned via bytes_written.
  */
-LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_written)
+LonStatusCode HalWriteUsb(/*int fd, */const void *buf, size_t len, size_t *bytes_written)
 {
 #if OS_IS(LINUX)
     const uint8_t *p = (const uint8_t*)buf;
@@ -763,19 +700,13 @@ LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_wri
     //     if (rc < 0) { if (bytes_written) *bytes_written = total; return LonStatusWriteFailed; }
     // }
  
-    L2Frame sicb;
-
-    if (fd < 0 || !buf || len == 0 || !bytes_written){
+    if (/*fd < 0 ||*/ !buf || len == 0 || !bytes_written){
         OsalPrintError(LonStatusInvalidParameter, "HalWriteUsb invalid parameter");
         return LonStatusInvalidParameter;
     }
 
-    sicb.len = len;
-    memcpy(sicb.pdu, buf, (size_t)sicb.len);
-
-    if(WriteLonLink(&sicb) != LDV_OK)
+    if(U60FT_WriteUSB_Data(buf, len, bytes_written) != LDV_OK)
     {
-        *bytes_written = 0;
         return LonStatusWriteFailed;
     }
 
@@ -819,7 +750,7 @@ LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_wri
  */
 extern LdvCode_e ReadLonLink(void* pBuffer);
 
-LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
+LonStatusCode HalReadUsb(/*int fd,*/ void *buf, size_t len, ssize_t *bytes_read)
 {
 #if OS_IS(LINUX)
     if (fd < 0 || !buf || len == 0 || !bytes_read) {
@@ -845,23 +776,17 @@ LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
     // implement a non-blocking read from the LON USB network interface here,
     // or implement code to asynchronously call LonUsbFeedRx() to feed data 
     // received from the LON USB network interface into the RX ring buffer
-    L2Frame sicb;
 
-
-    if (fd < 0 || !buf || len == 0 || !bytes_read) {
+    if (/*fd < 0 ||*/ !buf || len == 0 || !bytes_read) {
         OsalPrintError(LonStatusInvalidParameter, "HalReadUsb invalid parameter");
         return LonStatusInvalidParameter;
     }
 
-  //  *bytes_read = read(fd, buf, len);
 
-    if(ReadLonLink(&sicb) != LDV_OK)
+    if(U60FT_ReadUSB_Data(buf, len, (size_t*)bytes_read) != LDV_OK)
     {
         return LonStatusNoMessageAvailable;
     }
-
-    *bytes_read = sicb.len;
-    memcpy(buf, sicb.pdu, sicb.len);
 
     if (*bytes_read < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -876,8 +801,6 @@ LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
     }
     OsalPrintTrace(LonStatusNoError, "Read %zd bytes", *bytes_read);
     return LonStatusNoError;
-
-
 
 
     //#pragma message("Optional: implement OS-dependent definition of HalReadUsb()")

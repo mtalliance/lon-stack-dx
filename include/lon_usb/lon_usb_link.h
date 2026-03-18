@@ -334,20 +334,20 @@ __attribute__((used)) static LonUsbIfaceConfig lon_usb_iface_configs/*[]*/ = {
 typedef struct LonUsbLinkState {
 	OsalLockType state_lock;			// Mutex or spinlock for this structure
 	OsalLockType queue_lock;			// Mutex or spinlock for queue operations
-	bool assigned;						// True if this entry is in use
+//	bool assigned;						// True if this entry is in use
 										// Set on start to ALL_PRIORITIES to clear all queues
 										// Set on restart to NORMAL_PRIORITY to clear normal queue only
 	bool wait_for_uid;					// True if waiting for UID response
 	int uid_retries;					// Remaining LON NI UID read retries
 	bool have_uid;						// True if LON NI UID acquired
     volatile bool shutdown;				// True to terminate any threads
-	int iface_index;
-	char lon_dev_name[FILENAME_MAX];
-	char usb_dev_name[DEVICE_NAME_MAX];
-	int usb_fd;							// USB device file descriptor
+//	int iface_index;
+	//char lon_dev_name[FILENAME_MAX];
+	//char usb_dev_name[DEVICE_NAME_MAX];
+	//int usb_fd;							// USB device file descriptor
 
 	// LON USB interface model
-	LonUsbIfaceModel lon_usb_iface_model;
+	//LonUsbIfaceModel lon_usb_iface_model;
 
 	// LON settings and statistics
 	uint8_t uid[IZOT_UNIQUE_ID_LENGTH];	// LON NI unique ID (MAC ID or Neuron ID)
@@ -391,10 +391,11 @@ typedef struct LonUsbLinkState {
 
 	// Buffer queues for parsed messages; each queue holds LonUsbQueueBuffer entries
 	// Implemented using the generic Queue type from lcs_queue.h
-	Queue lon_usb_downlink_normal_queue;		// Downlink normal priority buffer queue
-	Queue lon_usb_downlink_priority_queue;		// Downlink high priority buffer queue
-	Queue lon_usb_uplink_normal_queue;			// Uplink normal priority buffer queue
-	Queue lon_usb_uplink_priority_queue;		// Uplink high priority buffer queue
+//	for Qand test will use Q in c file directly
+    //Queue lon_usb_downlink_normal_queue;		// Downlink normal priority buffer queue
+	//Queue lon_usb_downlink_priority_queue;		// Downlink high priority buffer queue
+	//Queue lon_usb_uplink_normal_queue;			// Uplink normal priority buffer queue
+	//Queue lon_usb_uplink_priority_queue;		// Uplink high priority buffer queue
 
 	// Uplink ring buffer for staging raw bytes received from the LON USB interface
 	// before parsing into messages
@@ -442,9 +443,12 @@ LON_STATIC_ASSERT(sizeof(LonUsbFrameHeaderType) == 4 * sizeof(uint8_t), "LonFram
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
+/*
 LonStatusCode OpenLonUsbLink(char *lon_dev_name, char *usb_dev_name,
 					int *iface_index, LonUsbOpenMode iface_mode,
 					LonUsbIfaceModel lon_usb_iface_model);
+*/
+LonStatusCode OpenLonUsbLink(void);
 
 /*
  * Writes a downlink message to the LON USB interface.
@@ -454,7 +458,7 @@ LonStatusCode OpenLonUsbLink(char *lon_dev_name, char *usb_dev_name,
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-LonStatusCode WriteLonUsbMsg(int iface_index, const L2Frame* in_msg);
+LonStatusCode WriteLonUsbMsg(/*int iface_index, */ const L2Frame* in_msg);
 
 /*
  * Reads an uplink message from the LON USB interface, if available.
@@ -470,7 +474,7 @@ LonStatusCode WriteLonUsbMsg(int iface_index, const L2Frame* in_msg);
  *   available. If no full message is available, tests for timeout waiting
  *   for the LON interface unique ID (UID) and retries the UID read request.
  */
-LonStatusCode ReadLonUsbMsg(int iface_index, L2Frame *out_msg);
+LonStatusCode ReadLonUsbMsg(/*int iface_index,*/ L2Frame *out_msg);
 
 /*
  * Feeds received bytes into the RX ring buffer for a LON USB interface.
@@ -488,7 +492,7 @@ LonStatusCode ReadLonUsbMsg(int iface_index, L2Frame *out_msg);
  *   The data is copied into the RX ring buffer for later processing
  *   by ReadLonUsbMsg().
  */
-size_t LonUsbFeedRx(int iface_index, const uint8_t *data, size_t len);
+size_t LonUsbFeedRx(/*int iface_index, */ const uint8_t *data, size_t len);
 
 /*
  * Closes a LON USB network interface.
