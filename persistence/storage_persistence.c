@@ -376,7 +376,7 @@ IzotBool IzotStorageSegIsInvalid(const IzotPersistentSegType persistent_seg_type
     // Optionally print the result; neither value is an error condition since a
     // storage data segment is always invalid on first use
     if (invalid_segment) {
-        OsalPrintLog(ERROR_LOG, LonStatusNoError, "IzotStorageSegIsInvalid: %s is invalid or uninitialized (%X transaction signature, %X validity)", 
+        OsalPrintLog(INFO_LOG, LonStatusNoError, "IzotStorageSegIsInvalid: %s is invalid or uninitialized (%X transaction signature, %X validity)", 
                 IzotPersistentGetSegName(persistent_seg_type), transaction_record.tx_signature, transaction_record.tx_state);  
     } else {
         OsalPrintLog(INFO_LOG, LonStatusNoError, "IzotStorageSegIsInvalid: %s is valid", 
@@ -573,7 +573,7 @@ static LonStatusCode OpenStorageSegment(const IzotPersistentSegType persistent_s
 static LonStatusCode InitSegmentMap(const IzotPersistentSegType persistent_seg_type)
 {
     LonStatusCode status = LonStatusNoError;
-    PersistentTransactionRecord transactionRecord = {TX_SIGNATURE, TX_DATA_VALID};
+    //PersistentTransactionRecord transactionRecord = {TX_SIGNATURE, TX_DATA_VALID};
     size_t region_offset;   // Offset of this region from start of storage
     size_t region_size;     // Size of this erase region
     int number_of_blocks;   // Number of blocks in this region

@@ -233,6 +233,7 @@ static void EventNormalConnecting(void *data)
  *   Network dependent services can be started here. These services
  *   can be stopped on disconnection and reset-to-provisioning events.
  */ 
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI) || !IUP_IS(NO_IUP)
 static void EventNormalConnected(void *data)
 {
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
@@ -258,7 +259,7 @@ static void EventNormalConnected(void *data)
     SetLsAddressFromIpAddr();
 #endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
-
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI) || !IUP_IS(NO_IUP)
 
 /*
  * Handles a normal provisioned network disconnection event.
@@ -272,13 +273,13 @@ static void EventNormalConnected(void *data)
  *   Network dependent services not required while disconnected can be 
  *   stopped here.
  */ 
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void EventNormalUserDisconnect(void *data)
 {
-#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
     is_connected = 0;
     CAL_Printf("Disconnected\r\n");
-#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 
 
 /*
@@ -291,13 +292,13 @@ static void EventNormalUserDisconnect(void *data)
  *   Handle a connection lost event that occurs for Wi-Fi when the
  *   station interface link to the home access point is lost.
  */ 
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void EventNormalLinkLost(void *data)
 {
-#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
     is_connected = 0;
     CAL_Printf("Link Lost\r\n");
-#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 }
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 
 
 /*
@@ -310,11 +311,12 @@ static void EventNormalLinkLost(void *data)
  *   Handle a possible IP address change after the DHCP-assigned
  *   address is renewed.
  */ 
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void EventNormalDHCPRenew(void *data)
 {
     CAL_Printf("DHCP renew\r\n");
 }
-
+#endif  // LINK_IS(ETHERNET) || LINK_IS(WIFI)
 
 #if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 /*
@@ -427,9 +429,9 @@ int common_event_handler(int event, void *data)
  * Returns:
  *  None
  */
+#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 static void InitModules()
 {
-#if LINK_IS(WIFI) && PROCESSOR_IS(MC200)
     int ret;
 
     // Initialize CLI Command
@@ -449,8 +451,8 @@ static void InitModules()
     app_sys_register_diag_handler();
     
     set_reconnect_iter(5);
-#endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 }
+#endif  // LINK_IS(WIFI) && PROCESSOR_IS(MC200)
 
 /*
  * Starts the IP link.
@@ -766,10 +768,10 @@ void CalSend(uint32_t port, IzotByte* addr, IzotByte* pData,
  */
 int CalReceive(IzotByte* pData, IzotByte* pSourceAddr)
 {
-    uint16_t bufferSize;
     int dataLength = 0;
 #if PROTOCOL_IS(LON_IP)
 #if PLATFORM_IS(FRTOS_ARM_EABI)
+    uint16_t bufferSize;
     struct sockaddr_in  from;
     int                 fromLen = sizeof(from);
     uint32_t            SrcIP;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(lon_stack_dx
-    VERSION 4.0.0
+    VERSION 4.0.2
     DESCRIPTION "LON Stack DX for LON/IP and U10/U60 LON FT-compatible USB interfaces"
     LANGUAGES C
 )
@@ -15,6 +15,9 @@ endif()
 # enable_language(C)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+#PARKER_START
+option(LON_STACK_EXPORT_ENABLE      "Use LonStack as a library instead of a sub-project"      OFF)
+#PARKER_END
 
 # Generate version header from the CMake project() VERSION
 set(LON_STACK_DX_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
@@ -48,7 +51,9 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_custom.c
     lcs/lcs_eeprom.c
     lcs/lcs_iup.c
-    lcs/lcs_link.c
+#PARKER_START
+    #lcs/lcs_link.c
+#PARKER_END
     lcs/lcs_netmgmt.c
     lcs/lcs_network.c
     lcs/lcs_node.c
@@ -58,16 +63,20 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_timer.c
     lcs/lcs_tsa.c
     lcs/lcs.c
-    lon_udp/ipv4_to_lon_udp.c
-    lon_udp/lon_udp_mapping_util.c
-    lon_usb/lon_usb_link.c
+#PARKER_START
+    #lon_udp/ipv4_to_lon_udp.c
+    #lon_udp/lon_udp_mapping_util.c
+    #lon_usb/lon_usb_link.c
+#PARKER_END
     persistence/storage_persistence.c
     persistence/lon_persistence.c
 )
 
 set(LON_STACK_DX_HEADERS
     include/abstraction/IzotCal.h
-    include/abstraction/IzotConfig.h
+#PARKER START
+    #include/abstraction/IzotConfig.h
+#PARKER_END
     include/abstraction/IzotEndian.h
     include/abstraction/IzotHal.h
     include/abstraction/IzotOsal.h
@@ -83,21 +92,27 @@ set(LON_STACK_DX_HEADERS
     include/lcs/lcs_app.h
     include/lcs/lcs_custom.h
     include/lcs/lcs_eia709_1.h
-    include/lcs/lcs_iup.h
+#PARKER START
+    #include/lcs/iup.h
+#PARKER_END
     include/lcs/lcs_link.h
     include/lcs/lcs_netmgmt.h
     include/lcs/lcs_network.h
     include/lcs/lcs_node.h
     include/lcs/lcs_physical.h
     include/lcs/lcs_platform.h
-    include/lcs/lcs_proxy.h
+#PARKER START
+    #include/lcs/lcs_proxy.h
+#PARKER_END
     include/lcs/lcs_queue.h
     include/lcs/lcs_tcs.h
     include/lcs/lcs_timer.h
     include/lcs/lcs_tsa.h
     include/lcs/lcs.h
-    include/lon_udp/ipv4_to_lon_udp.h
-    include/lon_usb/lon_usb_link.h
+#PARKER START
+   #include/lon_udp/ipv4_to_lon_udp.h
+   #include/lon_usb/lon_usb_link.h
+#PARKER_END
     include/persistence/storage_persistence.h
     include/persistence/lon_persistence.h
 )
@@ -120,13 +135,16 @@ target_link_libraries(lon_stack_dx PUBLIC Threads::Threads)
 # Set build defaults at compile time
 target_compile_definitions(lon_stack_dx
     PRIVATE
-    OS_ID=OS_ID_LINUX
+#PARKER START
+    #PROCESSOR_ID=PROCESSOR_ID_ARM64
+    PROCESSOR_ID=PROCESSOR_ID_STM32
+    #OS_ID=OS_ID_LINUX
+    OS_ID=OS_ID_FREERTOS
+#PARKER END
     LINK_ID=LINK_ID_USB
     PROTOCOL_ID=PROTOCOL_ID_LON_NATIVE
     ISI_ID=ISI_ID_NO_ISI
     INITIAL_LOG_CATEGORIES=LOG_PACKET_TRACE
-    MAX_UID_RETRIES=4
-    MAX_STATUS_RETRIES=4
     MAX_IFACE_STATES=1
 )
 
@@ -137,6 +155,9 @@ target_compile_definitions(lon_stack_dx
 add_library(lon_stack_dx::lon_stack_dx ALIAS lon_stack_dx)
 
 # Installation rules
+#PARKER START
+if(LON_STACK_EXPORT_ENABLE)
+#PARKER END
 install(TARGETS lon_stack_dx
     EXPORT lon_stack_dxTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -167,6 +188,10 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
+#PARKER START
+endif() # end of LON_STACK_EXPORT_ENABLE
+#PARKER END
+
 configure_package_config_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/lon_stack_dxConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/lon_stack_dxConfig.cmake"
@@ -179,11 +204,16 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lon_stack_dx
 )
 
+
 # Example executable (optional): builds example/LonStackExample1.c with main()
-add_executable(lon_stack_example1
-    example/LonStackExample1.c
-)
-target_link_libraries(lon_stack_example1 PRIVATE lon_stack_dx)
-target_compile_definitions(lon_stack_example1 PRIVATE INCLUDE_EXAMPLE_MAIN)
+# PARKER_START  commented out because we don't use this example ( we will generate our own)
+#add_executable(lon_stack_example1
+#    example/LonStackExample1.c
+#)
+
+#target_link_libraries(lon_stack_example1 PRIVATE lon_stack_dx)
+
+# target_compile_definitions(lon_stack_example1 PRIVATE INCLUDE_EXAMPLE_MAIN)
 # Ensure the example's own headers are visible
-target_include_directories(lon_stack_example1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/example)
+#target_include_directories(lon_stack_example1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/example)
+# PARKER_END

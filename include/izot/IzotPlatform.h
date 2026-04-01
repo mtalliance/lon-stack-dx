@@ -271,9 +271,9 @@
     //  #pragma message("Generic ARM EABI GCC platform (ARM_EABI_GCC) selected")
     #define ARM_EABI_GCC_HOSTED
 
-    // Specify processor type.
-    #undef PROCESSOR_ID
-    #define PROCESSOR_ID PROCESSOR_ID_ARM32
+    // Specify processor type.      
+    //#undef PROCESSOR_ID
+    //#define PROCESSOR_ID PROCESSOR_ID_ARM32           // it is overiding STM32, maybe not
 
     // Specify operating system.
     #undef OS_ID
@@ -438,6 +438,7 @@
 
     #define IZOT_UNION_NESTED_BEGIN(n)   union __attribute__((__packed__))
     #define IZOT_UNION_NESTED_END(n)     n
+
 
 	/*
      * Compiler-dependent types for signed and unsigned 8-bit, 16-bit scalars and 32-bit scalars.

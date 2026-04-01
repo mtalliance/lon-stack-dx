@@ -81,22 +81,24 @@ static unsigned DmfWindowSize;
  *****************************************************************/
 
 /*******************************************************************************
- Function:  inRange
+ Function:  InDmfWindow
  Purpose:   To check the address within the DMF window range.
  Comments:  None.
  *******************************************************************************/
-static int inRange(unsigned addr, unsigned size) 
+#if LON_DMF_ENABLED
+static int InDmfWindow(unsigned addr, unsigned size) 
 {
     return (addr >= DmfWindowAddress && 
     addr + size <= DmfWindowAddress + DmfWindowSize);
 }
+#endif  /* LON_DMF_ENABLED */
 
 /*******************************************************************************
- Function:  setMem
+ Function:  ConfigureDmfWindow
  Purpose:   To set the DMF window address and size.
  Comments:  None.
  *******************************************************************************/
-void setMem(const unsigned addr, const unsigned size) 
+void ConfigureDmfWindow(const unsigned addr, const unsigned size) 
 {
     DmfWindowAddress = addr;
     DmfWindowSize = size;
@@ -124,20 +126,25 @@ void RecomputeChecksum(void)
  program can determine whether the message was sent or not.
  *******************************************************************************/
 LonStatusCode ManualServiceRequestMessage(void) {
+    LonStatusCode status = LonStatusNoError;
     NWSendParam *nwSendParamPtr;
     APDU *apduRespPtr;
 
     if (QueueFull(&gp->nwOutQ)) {
-        OsalPrintLog(ERROR_LOG, LonStatusNoBufferAvailable, "No room for service request message in network layer queue");
-        return (LonStatusNoBufferAvailable); /* Can't send it now. Try later. */
+        status = LonStatusNoBufferAvailable;
+        OsalPrintLog(ERROR_LOG, status, "ManualServiceRequestMessage: No room for Service request message in network layer queue");
+        return status; // Can't send it now; try later
     }
 
-    /* Send unack domain wide broadcast message. */
+    // Send unacked domain-wide broadcast message
+    OsalPrintLog(INFO_LOG, status, "ManualServiceRequestMessage: Send Service message");
     nwSendParamPtr = QueueTail(&gp->nwOutQ);
     nwSendParamPtr->pduSize = 
                             1 + IZOT_UNIQUE_ID_LENGTH + IZOT_PROGRAM_ID_LENGTH;
     if (nwSendParamPtr->pduSize > gp->nwOutBufSize) {
-        return (LonStatusInvalidBufferLength); /* Do not have sufficient space to send the message. */
+        status = LonStatusInvalidBufferLength;
+        OsalPrintLog(ERROR_LOG, status, "ManualServiceRequestMessage: Do not have sufficient space to send the message");
+        return status; /* Do not have sufficient space to send the message. */
     }
     apduRespPtr = (APDU *) (nwSendParamPtr + 1);
     apduRespPtr->code.allBits = 0x7F; /* Manual Service Request. */
@@ -1861,7 +1868,8 @@ void HandleNMReadMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     switch (apduPtr->data[0]) {
     case ABSOLUTE_MEM_ADDR:
-        if (inRange(offset, apduPtr->data[3])) {
+#if LON_DMF_ENABLED
+        if (InDmfWindow(offset, apduPtr->data[3])) {
             if (IzotMemoryRead(offset, apduPtr->data[3], apduRespPtr->data)) {
                 tsaSendParamPtr->apduSize = 1;
                 apduRespPtr->code.allBits = NM_resp_failure | NM_READ_MEMORY;
@@ -1869,11 +1877,14 @@ void HandleNMReadMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
             QueueWrite(tsaOutQPtr);
             return;
         } else {
+#endif
             memp = (char *) nmp;
             if (offset >= 0xF000) {
                 memp = (char *) eep - 0xF000;
             }
+#if LON_DMF_ENABLED
         }
+#endif
         break;
     case READ_ONLY_RELATIVE:
     default:
@@ -1886,7 +1897,7 @@ void HandleNMReadMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         memp = (char *) &(nmp->stats);
         break;
 
-#if    ENABLE_STACKTRACE
+#if ENABLE_STACKTRACE
         case DBG_RELATIVE:
         memp = (char *)STK_GetSnapshot();
         break;
@@ -1987,7 +1998,8 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     switch (pr->mode) {
     case ABSOLUTE_MEM_ADDR:
-        if (inRange(offset, pr->count)) {
+#if LON_DMF_ENABLED
+        if (InDmfWindow(offset, pr->count)) {
             if (LON_SUCCESS(IzotMemoryWrite(offset, pr->count, pr->data))) {
                 IzotPersistentSegSetCommitFlag(IzotPersistentSegNodeDefinition);
                 IzotPersistentDataHasBeenUpdated();
@@ -2004,12 +2016,15 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
             }
             return;
         } else {
+#endif
             memp = (char *) nmp;
             if (offset >= 0xF000) {
                 memp = (char *) eep;
                 offset -= 0xF000;
             }
+#if LON_DMF_ENABLED
         }
+#endif
         break;
     case CONFIG_RELATIVE:
         memp = (char *) &(eep->configData);
@@ -2021,7 +2036,7 @@ void HandleNMWriteMemory(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         memp = (char *) &(eep->readOnlyData);
         break;
     default:
-        /* Invalid Mode */
+        // Invalid mode
         NMNDRespond(NM_MESSAGE, LonStatusInvalidMessageMode, appReceiveParamPtr, apduPtr);
         return;
     }

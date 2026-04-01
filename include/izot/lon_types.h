@@ -14,6 +14,8 @@
 
 #include "izot/IzotPlatform.h"
 #include "izot/iap_types.h"       // IAP type definitions
+#include <stdint.h>
+
 
 // Return status codes
 typedef enum {
@@ -285,7 +287,7 @@ typedef enum {
 #define IZOT_LOCATION_LENGTH     6
 
 // Length of the node's unique identifier, in bytes;
-// the Unique ID is also known as the Neuron ID or MAC ID,
+// the Unique ID is also known as the Neuron ID or MAC ID
 #define IZOT_UNIQUE_ID_LENGTH    6
 
 // Number of communication control bytes
@@ -510,14 +512,6 @@ typedef IZOT_ENUM_BEGIN(IzotServiceLedPhysicalState) {
 #define PROTOCOL_VERSION   0   /* Protocol version                      */
 #define MAX_DOMAINS        2   /* Maximum # of domains allowed          */
 
-/* Set the size of the array to log error messages from the LON Stack.
-   The error messages wrap around, if there are too many errors.
-   Errors seldom happen. So, there is no need for this to be too large. */
-#if 0
-// TBD: delete
-#define ERROR_MSG_SIZE  1000   /* 20 messages each with 50 chars        */
-#endif
-
 /* Flex domain indicates that the message was received in flex domain when
    domain index is 2 */
 #define FLEX_DOMAIN        2   
@@ -556,7 +550,9 @@ typedef IZOT_ENUM_BEGIN(IzotServiceLedPhysicalState) {
 #define MAX_DATA_SIZE 255
 
 // Maximum size of message on the wire (might be over sized a byte or two for safety)
+#ifndef MAX_PDU_SIZE
 #define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
+#endif
 
 // Maximum LON MAC layer message size (bytes) for non-expanded non-extended
 // and extended messages,and expanded non-extended and extended messages with
@@ -2810,11 +2806,11 @@ typedef LonStatusCode (*IzotPersistentSegWriteFunction) (const IzotPersistentSeg
  *  otherwise, the LON stack will attempt to read and apply the persistent
  *  data.
  *
- *  Use <IzotFlashSegIsInTransactionRegistrar> to register a handler for
+ *  Use <IzotFlashSegIsInvalidRegistrar> to register a handler for
  *  this event. Without an application-specific handler, this event always
  *  returns TRUE.
  */
-typedef IzotBool (*IzotPersistentSegIsInTransactionFunction)(const IzotPersistentSegType persistent_seg_type);
+typedef IzotBool (*IzotPersistentSegIsInvalidFunction)(const IzotPersistentSegType persistent_seg_type);
 
 /*
  *  Callback: IzotStorageStartSegUpdate
@@ -2935,14 +2931,15 @@ typedef LonStatusCode (*IzotPersistentSegSerializeFunction)(void * const pData, 
  *  None
  *
  *  Remarks:
- *  Whenever the LON device has been reset, the mode of the device is changed
- *  to *online*, but no IzotOnline() event is generated.
+ *  Whenever the LON device has been reset, the mode of the device
+ *  is changed to *online*, but no IzotOnline() event is generated.
  *
- *  Note that resetting the LON device only affects LON Stack and does not
+ *  Resetting the LON device only affects LON Stack and does not
  *  cause a processor or application software reset.
  *
  *  Use <IzotResetRegistrar> to register a handler for this event.
- *  Without an application-specific reset event handler, this event does nothing.
+ *  Without an application-specific reset event handler, this event
+ *  does nothing.
  */
 typedef void (*IzotResetFunction)(void);
 
@@ -3069,9 +3066,6 @@ typedef void (*IzotDatapointUpdateCompletedFunction)(
  *
  *  If the message is a request message, then the function must deliver a
  *  response using <IzotSendResponse> passing the provided *correlator*.
- *  Alternatively, if for any reason the application chooses not to respond to
- *  a request, it must explicitly release the correlator by calling
- *  <IzotReleaseCorrelator>.
  *
  *  Application messages are always delivered to the application, regardless
  *  of whether the message passed authentication or not. It is up to the
@@ -3081,10 +3075,7 @@ typedef void (*IzotDatapointUpdateCompletedFunction)(
  *  authenticated messages that do not pass authentication. The authenticated
  *  flag is set only for correctly authenticated messages.
  *
- *  Use <IzotMsgArrivedRegistrar> to register a handler for this event. Without
- *  an application-specific event handler, the stack automatically releases
- *  application request messages (see <IzotReleaseCorrelator>) and does nothing
- *  else.
+ *  Use <IzotMsgArrivedRegistrar> to register a handler for this event
  */
 typedef void (*IzotMsgArrivedFunction)(
     const IzotReceiveAddress* const pAddress,
@@ -3293,13 +3284,13 @@ typedef struct {
 
 // LON timer structure
 typedef struct __attribute__ ((packed)) {
-	IzotUbits32	expiration;		// Time to expire
-	IzotUbits32	repeatTimeout;  // Repeat timeout on expiration (0 means not repeating)
+	uint32_t expiration;		// Time to expire
+	uint32_t repeatTimeout;     // Repeat timeout on expiration (0 means not repeating)
 } LonTimer;
 
 // Stopwatch structure
 typedef struct {
-	IzotUbits32	start;			// Time stopwatch started
+	uint32_t start;			    // Time stopwatch started
 } LonWatch;
 
 #endif /* _LON_TYPES_H */
