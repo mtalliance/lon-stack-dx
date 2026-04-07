@@ -398,8 +398,8 @@
     #define ARM_EABI_GCC_HOSTED        // used with the CPM 4200 SDK
 
     // Specify processor type.
-    #undef PROCESSOR_ID
-    #define PROCESSOR_ID PROCESSOR_ID_ARM32
+    //#undef PROCESSOR_ID
+    //#define PROCESSOR_ID PROCESSOR_ID_ARM32
 
     // Specify operating system.
     #undef OS_ID

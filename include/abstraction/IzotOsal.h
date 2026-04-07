@@ -52,8 +52,8 @@ extern "C"
 #include <fcntl.h>
 #include <errno.h>
 #if !PROCESSOR_IS(STM32)
-//#include <sys/ioctl.h>    // !PROCESSOR_IS(STM32) is not working 
-//#include <termios.h>
+    #include <sys/ioctl.h>    // !PROCESSOR_IS(STM32) is not working 
+    #include <termios.h>
 #endif  // !PROCESSOR_IS(STM32)
 #endif  // OS_IS(LINUX) || OS_IS(FREERTOS)
 

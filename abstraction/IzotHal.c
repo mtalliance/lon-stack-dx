@@ -34,6 +34,8 @@
 #include <sys/types.h>
 #include "lcs/lcs_link.h"       // for LonDataFrame definition; replace with appropriate header if needed
 //#include "izot/IzotPlatform.h" // Project-specific configuration
+LonStatusCode WriteLonLink(void* pBuffer);
+LonStatusCode ReadLonLink(void* pBuffer);
 
 // Forward declare sync() for platforms that need it
 #if defined(__APPLE__) || defined(__unix__) || defined(__linux__)
