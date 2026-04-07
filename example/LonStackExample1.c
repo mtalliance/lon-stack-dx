@@ -273,6 +273,7 @@ LonStatusCode LoopExample1(void)
     // ToDo -- add application-specific event-handlers here, or in separate
     // tasks if available on the target platform; keep these handlers under
     // min(10, ((InputBufferCount - 1) * 1000) / MaxPacketRate) milliseconds
+
     if (LonTimerExpired(&HeartbeatTimer)) {
         if (service_count > 0) {
             OsalPrintLog(INFO_LOG, status, "LoopExample1: Send Service message, attempt number %u", INITIAL_SERVICE_COUNT - service_count + 1);
@@ -285,6 +286,7 @@ LonStatusCode LoopExample1(void)
 
         // Send heartbeats
         uint16_t value;
+
         value = IZOT_GET_UNSIGNED_WORD(*(SNVT_flow_p*) flow1OutDef.PValue) + 100;
         IZOT_SET_UNSIGNED_WORD(*(SNVT_flow_p*) flow1OutDef.PValue, value);
         if (!LON_SUCCESS(IzotPropagateByIndex(flow1OutDef.NvIndex))) {
@@ -304,7 +306,6 @@ LonStatusCode LoopExample1(void)
             OsalPrintLog(ERROR_LOG, status, "LoopExample1: Failed to propagate temp2Out");
         }
     }
-
     return status;
 }
 

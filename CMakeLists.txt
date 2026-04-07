@@ -63,9 +63,9 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_timer.c
     lcs/lcs_tsa.c
     lcs/lcs.c
+    lon_udp/ipv4_to_lon_udp.c
+    lon_udp/lon_udp_mapping_util.c
 #PARKER_START
-    #lon_udp/ipv4_to_lon_udp.c
-    #lon_udp/lon_udp_mapping_util.c
     #lon_usb/lon_usb_link.c
 #PARKER_END
     persistence/storage_persistence.c
@@ -92,27 +92,21 @@ set(LON_STACK_DX_HEADERS
     include/lcs/lcs_app.h
     include/lcs/lcs_custom.h
     include/lcs/lcs_eia709_1.h
-#PARKER START
-    #include/lcs/iup.h
-#PARKER_END
+    include/lcs/lcs_iup.h
     include/lcs/lcs_link.h
     include/lcs/lcs_netmgmt.h
     include/lcs/lcs_network.h
     include/lcs/lcs_node.h
     include/lcs/lcs_physical.h
     include/lcs/lcs_platform.h
-#PARKER START
-    #include/lcs/lcs_proxy.h
-#PARKER_END
+    include/lcs/lcs_proxy.h
     include/lcs/lcs_queue.h
     include/lcs/lcs_tcs.h
     include/lcs/lcs_timer.h
     include/lcs/lcs_tsa.h
     include/lcs/lcs.h
-#PARKER START
-   #include/lon_udp/ipv4_to_lon_udp.h
-   #include/lon_usb/lon_usb_link.h
-#PARKER_END
+    include/lon_udp/ipv4_to_lon_udp.h
+    include/lon_usb/lon_usb_link.h
     include/persistence/storage_persistence.h
     include/persistence/lon_persistence.h
 )
