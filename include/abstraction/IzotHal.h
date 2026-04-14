@@ -162,7 +162,7 @@ typedef struct usbtty_ctx {
 LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out);
 
 // Close device (just closes fd)
-//void HalCloseUsb(int fd);
+void HalCloseUsb(int fd);
 
 /*
  * Writes buffer to LON USB network interface.
@@ -171,12 +171,12 @@ LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out);
  * Retries on EINTR and EAGAIN. For partial progress followed by error, the
  * already-written byte count is returned via bytes_written.
  */
-LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written);
+LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_written);
 
 // Polling USB read abstraction. Returns LonStatusNoError with *bytes_read set
 // to the number of bytes read, LonStatusNoMessageAvailable if no data is available,
 // or another LonStatusCode on error.
-LonStatusCode HalReadUsb(void *buf, size_t len, ssize_t *bytes_read);
+LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read);
 
 /*****************************************************************
  * Section: MAC Address Function Definition

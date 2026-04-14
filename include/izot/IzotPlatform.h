@@ -271,7 +271,7 @@
     //  #pragma message("Generic ARM EABI GCC platform (ARM_EABI_GCC) selected")
     #define ARM_EABI_GCC_HOSTED
 
-    // Specify processor type.      
+    // Specify processor type.
     //#undef PROCESSOR_ID
     //#define PROCESSOR_ID PROCESSOR_ID_ARM32           // it is overiding STM32, maybe not
 
@@ -1318,7 +1318,7 @@
  * Section: Platform-Dependent Link Definitions
  *****************************************************************/
 
-#if !LINK_IS(USB) && !LINK_IS(ETHERNET) && !LINK_IS(WIFI)
+#if !LINK_IS(USB) && !LINK_IS(SINGLE_USB) && !LINK_IS(ETHERNET) && !LINK_IS(WIFI)
     #pragma message("Implement LON link interface code")
 #endif
 

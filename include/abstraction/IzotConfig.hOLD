@@ -62,6 +62,7 @@
  *              #if IUP_IS(V1)
  *              #if LINK_IS(MIP)
  *              #if LINK_IS(USB)
+ *              #if LINK_IS(SINGLE_USB)
  *              #if LINK_IS(WIFI)
  *              #if PROCESSOR_IS(ARM64)
  *              #if PROTOCOL_IS(LON_IP)
@@ -70,6 +71,11 @@
 #if !defined(_IZOT_CONFIG_H)
 #define _IZOT_CONFIG_H
  
+#include <stdint.h>
+//#include "izot/IzotPlatform.h"       // Project-specific configuration
+//#include "izot/IzotApi.h"            // LON Stack API definition
+
+
 // Conditional test macros
 #define PLATFORM_IS(platid) (PLATFORM_ID == PLATFORM_ID_ ## platid)
 #define DEBUG_IS(dbgid) (DEBUG_ID == DEBUG_ID_ ##dbgid)
@@ -124,6 +130,7 @@
 #define LINK_ID_WIFI            1   // LON/IP Wi-Fi data link
 #define LINK_ID_MIP             2   // Neuron MIP data link
 #define LINK_ID_USB             3   // U60 FT-compatible USB data link
+#define LINK_ID_SINGLE_USB      4   // U60 FT-compatible Single USB data link
 
 // Operating System IDs -- default is Linux
 #define OS_ID_LINUX             0   // Linux or POSIX-compliant OS
@@ -157,8 +164,9 @@
  * Section: LON Stack Configuration Overrides
  *****************************************************************/
 // Add any overrides to the default settings in this section.
-#define PLATFORM_ID PLATFORM_ID_LINUX64_ARM_GCC
-#define LINK_ID LINK_ID_USB
+#define PLATFORM_ID PLATFORM_ID_FRTOS_ARM_EABI
+#define LINK_ID LINK_ID_SINGLE_USB
 #define PROTOCOL_ID PROTOCOL_ID_LON_NATIVE
+#define PROCESSOR_ID  PROCESSOR_ID_STM32
 
 #endif  // defined(_IZOT_CONFIG_H) 

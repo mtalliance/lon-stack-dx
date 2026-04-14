@@ -20,6 +20,10 @@
 #include "lon_usb/lon_usb_link.h"
 #endif // LINK_IS(MIP) || LINK_IS(USB)
 
+#if LINK_IS(SINGLE_USB)
+#include "lon_usb/lon_usb_single_link.h"
+#endif // LINK_IS(SINGLE_USB)
+
 // LON Stack DX initialization
 extern LonStatusCode AppLayerInit(void); // Init function for application layer
 
@@ -32,10 +36,10 @@ extern void NetworkLayerSend(void);
 #if LINK_IS(WIFI) || LINK_IS(ETHERNET)
 extern void LinkLayerUdpSend(void);
 #endif // LINK_IS(WIFI) || LINK_IS(ETHERNET)
-#if LINK_IS(USB) || LINK_IS(MIP)
+#if LINK_IS(USB) || LINK_IS(SINGLE_USB) || LINK_IS(MIP)
 extern void LinkLayerUsbSend(void);
 extern LonStatusCode NetworkInterfaceSend(void);
-#endif // LINK_IS(USB) || LINK_IS(MIP)
+#endif // LINK_IS(USB) || LINK_IS(SINGLE_USB) || LINK_IS(MIP)
 
 // Receive functions for the LON Stack DX layers
 extern void AppLayerReceive(void);
@@ -46,9 +50,9 @@ extern void NetworkLayerReceive(void);
 #if LINK_IS(WIFI) || LINK_IS(ETHERNET)
 extern void LinkLayerUdpReceive(void);
 #endif // LINK_IS(WIFI) || LINK_IS(ETHERNET)
-#if LINK_IS(USB) || LINK_IS(MIP)
+#if LINK_IS(USB) || LINK_IS(SINGLE_USB) || LINK_IS(MIP)
 extern void LinkLayerUsbReceive(void);
-#endif // LINK_IS(USB) || LINK_IS(MIP)
+#endif // LINK_IS(USB) || LINK_IS(SINGLE_USB) || LINK_IS(MIP)
 
 #define LED_TIMER_VALUE      2000  // How often to flash in ms
 #define CHECKSUM_TIMER_VALUE 1000  // How often to check config checksum in ms
@@ -126,7 +130,7 @@ LonStatusCode LCS_Service()
         snvt_capability_info = &capability_info;
         si_header_ext = &header_ext;
         
-		// Check if the node needs to be reset.
+		// Check if the device needs to be reset
 		if (gp->resetNode) {
 			gp->resetOk = TRUE;
 			status = NodeReset(FALSE);
@@ -146,26 +150,46 @@ LonStatusCode LCS_Service()
 		TransportLayerSend();
 		AuthSend();
 		NetworkLayerSend();
-		#if LINK_IS(MIP) || LINK_IS(USB)
+		#if LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB)
 			// Send pending downlink requests from the link layer to the downlink queues
 			LinkLayerUsbSend();
 			// Send messages from the downlink queues to the network interfaces
 			status = NetworkInterfaceSend();
-		#else  // !(LINK_IS(MIP) || LINK_IS(USB))
+		#else  // !(LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB))
 			LinkLayerUdpSend();
-		#endif // LINK_IS(MIP) || LINK_IS(USB)
+		#endif // LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB)
 		
 		// Call the Receive functions of all layers
-		#if LINK_IS(MIP) || LINK_IS(USB)
+		#if LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB)
 			LinkLayerUsbReceive();
-		#else  // !(LINK_IS(MIP) || LINK_IS(USB))
+		#else  // !(LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB))
 			LinkLayerUdpReceive();
-		#endif // LINK_IS(MIP) || LINK_IS(USB)
+		#endif // LINK_IS(MIP) || LINK_IS(USB) || LINK_IS(SINGLE_USB)
 		NetworkLayerReceive();
 		AuthReceive();
 		TransportLayerReceive();
 		SessionLayerReceive();
 		AppLayerReceive();
+
+		// Get the stack unique ID if not already done
+		if (!gp->uniqueIdAvailable) {
+			IzotUniqueId uniqueId = {0};
+			status = IzotGetUniqueId(stackNum, &uniqueId);
+			if (LON_SUCCESS(status)) {
+				memcpy(eep->readOnlyData.UniqueNodeId, &uniqueId, IZOT_UNIQUE_ID_LENGTH);
+				gp->uniqueIdAvailable = true;
+				OsalPrintLog(INFO_LOG, LonStatusNoError, 
+						"LCS_Service: LON Stack unique ID set to %2.2X%2.2X:%2.2X%2.2X:%2.2X%2.2X",
+						uniqueId[0], uniqueId[1], uniqueId[2],
+						uniqueId[3], uniqueId[4], uniqueId[5]);
+			} else if (status == LonStatusLniUniqueIdNotAvailable) {
+				// Unique ID not available yet; try again later
+				status = LonStatusNoError; // Don't treat as error since it may be transient
+			} else {
+				OsalPrintLog(ERROR_LOG, status, "LCS_Service: Failed to get Unique ID for stack %d", stackNum);
+				return status;
+			}
+		}
 
 		// Flash Service LED if needed
 		if (LonTimerExpired(&gp->ledTimer)) {
@@ -181,7 +205,6 @@ LonStatusCode LCS_Service()
                 gp->serviceLedState = SERVICE_ON;
                 gp->serviceLedPhysical = SERVICE_LED_ON;
             }
-            
 			if (gp->prevServiceLedState != gp->serviceLedState || gp->preServiceLedPhysical != gp->serviceLedPhysical) {
                 IzotServiceLedStatus(gp->serviceLedState, gp->serviceLedPhysical);
 				gp->prevServiceLedState = gp->serviceLedState;

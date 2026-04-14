@@ -1,5 +1,5 @@
 /*
- * lon_usb_link.h
+ * lon_usb_single_link.h
  *
  * Copyright (c) 2017-2026 EnOcean
  * SPDX-License-Identifier: MIT
@@ -10,10 +10,8 @@
  * 			U60, or U70 LON USB network interface device.
  */
 
-#if !defined(_LON_USB_LINK_H)
-#define _LON_USB_LINK_H
-
-#if !LINK_IS(SINGLE_USB)
+#if !defined(_LON_USB_SINGLE_LINK_H)
+#define _LON_USB_SINGLE_LINK_H
 
 #include "izot/IzotPlatform.h"
 #include "izot/lon_types.h"
@@ -23,6 +21,13 @@
 #include "lcs/lcs_link.h"
 #include "lcs/lcs_queue.h"
 
+#if LINK_IS(SINGLE_USB)
+
+#if PROCESSOR_IS(STM32)
+#include <cmsis_compiler.h>  // __REV16
+#define ntohs(x) ((uint16_t)__REV16((uint16_t)(x)))
+#define htons(x) ((uint16_t)__REV16((uint16_t)(x)))
+#endif
 
 // Maximum time to wait for an uplink reset on startup and a layer mode change (milliseconds)
 #ifndef NI_RESET_WAIT_TIME
@@ -98,11 +103,6 @@
 // Maximum bytes to parse from the USB receive ring buffer per parse window
 #ifndef MAX_BYTES_PER_USB_PARSE_WINDOW
 #define MAX_BYTES_PER_USB_PARSE_WINDOW 512
-#endif
-
-// Maximum number of LON USB interfaces supported
-#ifndef MAX_IFACE_STATES
-#define MAX_IFACE_STATES 4
 #endif
 
 // Maximum entries in the LON downlink and uplink buffer queues
@@ -200,14 +200,6 @@ typedef struct LonStats {
 #define LON_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #endif
 
-typedef struct LonUsbConfig {
-	uint32_t in_transfer_size;			// Input transfer size in bytes
-	uint32_t read_timeout;				// Read timeout in milliseconds
-	uint32_t write_timeout;				// Write timeout in milliseconds
-	uint32_t uplink_container_limit;	// Uplink container limit in packets
-	uint32_t llp_timeout;				// LLP timeout in milliseconds
-} LonUsbConfig;
-
 // Downlink state machine states
 typedef enum {
 	/* --- RESTART --- */
@@ -251,32 +243,6 @@ typedef enum {
 	DOWNLINK_INVALID					// Invalid state
 } DownlinkState;
 
-// Downlink state machine state names
-static const char* downlink_state_names[] = {
-	"DOWNLINK_START",
-	"DOWNLINK_WAIT_STARTUP_RESET",
-	"DOWNLINK_WAIT_STARTUP_RESYNC_ACK",
-	"DOWNLINK_WAIT_RESYNC_RESET",
-	"DOWNLINK_LAYER_5_REQUEST",
-	"DOWNLINK_WAIT_LAYER_5_ACK",
-	"DOWNLINK_WAIT_L5_RESYNC_ACK",
-	"DOWNLINK_WAIT_L5_RESET",
-	"DOWNLINK_NI_UNIQUE_ID_REQUEST",
-	"DOWNLINK_WAIT_NI_UNIQUE_ID",
-	"DOWNLINK_LAYER_2_REQUEST",
-	"DOWNLINK_WAIT_LAYER_2_ACK",
-	"DOWNLINK_WAIT_L2_RESYNC_ACK",
-	"DOWNLINK_WAIT_L2_RESET",
-	"DOWNLINK_MIP_STATUS_REQUEST",
-	"DOWNLINK_WAIT_MIP_STATUS",
-	"DOWNLINK_IDLE_START",
-	"DOWNLINK_IDLE",
-	"DOWNLINK_WAIT_CP_ACK",
-	"DOWNLINK_WAIT_MSG_ACK",
-	"DOWNLINK_WAIT_CP_MSG_REQ_ACK",
-	"DOWNLINK_WAIT_CP_RESPONSE",
-	"DOWNLINK_INVALID"
-};
 
 // Uplink state machine states
 typedef enum {
@@ -288,17 +254,6 @@ typedef enum {
 	UPLINK_ESCAPED_DATA,			// Message streaming, escaped data
 	UPLINK_INVALID					// Invalid state
 } UplinkState;
-
-// Uplink state machine state names
-static const char* uplink_state_names[] = {
-	"UPLINK_IDLE",
-	"UPLINK_FRAME_CODE",
-	"UPLINK_FRAME_PARAMETER",
-	"UPLINK_CODE_PACKET_CHECKSUM",
-	"UPLINK_MESSAGE",
-	"UPLINK_ESCAPED_DATA",
-	"UPLINK_INVALID"
-};
 
 // Message priority levels
 typedef enum {
@@ -421,23 +376,10 @@ typedef enum {
 } LonUsbIfaceType;
 
 // LON USB interface model enumeration
-#if LINK_IS(USB)
-	typedef enum {
-		U60_FT
-	} LonUsbIfaceModel;
-	#define MAX_IFACE_MODELS 1
-#else
-	typedef enum {
-		U10_FT_AB,
-		U10_FT_C,
-		U20_PL,
-		U60_FT,
-		U60_TP_1250,
-		U70_PL,
-		RF_900
-	} LonUsbIfaceModel;
-	#define MAX_IFACE_MODELS 6
-#endif // LINK_IS(USB)
+typedef enum {
+    U60_FT                  
+} LonUsbIfaceModel;
+#define MAX_IFACE_MODELS 1
 
 // LON USB link-layer interface configuration structure
 typedef struct LonUsbIfaceConfig {
@@ -463,27 +405,10 @@ typedef struct LonUsbIfaceConfig {
 #endif	// OS_IS(LINUX_KERNEL)
 
 // LON USB interface configurations indexed by LonUsbIfaceModel
-#if LINK_IS(USB)
 	__attribute__((used)) static LonUsbIfaceConfig lon_usb_iface_configs[] = {
 		// U60 FT and U10 FT Rev C
 		{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true}
 	};
-#else
-	static LonUsbIfaceConfig lon_usb_iface_configs[] = {
-		// U10 FT Rev A/B
-		{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
-		// U10 FT Rev C
-		{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
-		// U20 PL
-		{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
-		// U60 FT
-		{LON_USB_INTERFACE_U50, LON_USB_LDISC_MIP_U50, FRAME_CODE_PACKET, true, true, true},
-		// U60 TP-1250
-		{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false},
-		// U70 PL
-		{LON_USB_INTERFACE_U61, LON_USB_LDISC_MIP_U61, FRAME_SYNC_ONLY, false, false, false}
-	};
-#endif // LINK_IS(USB)
 
 // LON USB link state structure
 typedef struct LonUsbLinkState {
@@ -504,10 +429,6 @@ typedef struct LonUsbLinkState {
 	bool have_status;						// True if MIP status response received
 	bool ready;								// True if link layer is ready for normal operation
     volatile bool shutdown;					// True to terminate any threads
-	int iface_index;
-	char lon_dev_name[FILENAME_MAX];
-	char usb_dev_name[DEVICE_NAME_MAX];
-	int usb_fd;								// USB device file descriptor
 
 	// LON USB interface model and type (MIP/U50 vs MIP/U61)
 	LonUsbIfaceModel lon_usb_iface_model;
@@ -520,9 +441,6 @@ typedef struct LonUsbLinkState {
 											   // differ from configured_iface_mode
 											   // during startup and mode changes
 	LonStats lon_stats;						   // Last copy of LON stats
-
-	// USB parameters
-	LonUsbConfig usb_params;
 
 	// Timestamps
 	OsalTickCount start_time;				// Time of interface startup
@@ -588,25 +506,6 @@ typedef struct LonUsbLinkState {
 // Verify packed layout for 4-byte LonUsbFrameHeaderType
 LON_STATIC_ASSERT(sizeof(LonUsbFrameHeaderType) == 4 * sizeof(uint8_t), "LonFrameHeader size mismatch");
 
-// IPV4 ICMP "poll" (ping) definitions - 
-//    ============================================================================
-//    | 8                | 8                | 16                                 |
-//    ============================================================================
-//  0 | Version/IHL      | Type of service  | Length                             |
-//  4 | Identification                      | Flags & offset                     |
-//  8 | TTL              | Protocol         | Header Checksum                    |
-// 12 | Source IP address                                                        |
-// 16 | Destination IP address                                                   |
-//    ==ICMP Header===============================================================
-// 20 | Type of message  | Code             | Checksum                           |
-//    ============================================================================
-#define IPV4_START			2					// inc. BL & LTV2 bytes
-#define IPV4_TOS			(IPV4_START+1)		// 0
-#define IPV4_PROTO			(IPV4_START+9)		// 1:ICMP
-#define IPV4_DEST_ADDR		(IPV4_START+16)
-#define IPV4_ICMP_TYPE		(IPV4_START+20)		// 8:ping
-#define IPV4_ICMP_CODE		(IPV4_START+21)		// 0
-
 /*****************************************************************
  * Section: Function Declarations
  *****************************************************************/
@@ -614,7 +513,7 @@ LON_STATIC_ASSERT(sizeof(LonUsbFrameHeaderType) == 4 * sizeof(uint8_t), "LonFram
 /*
  * Processes retry and downlink requests for a specified LON USB network interface.
  * Parameters:
- *   iface_index: LON interface index returned by OpenLonUsbLink()
+ *   none
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  * Notes:
@@ -622,37 +521,27 @@ LON_STATIC_ASSERT(sizeof(LonUsbFrameHeaderType) == 4 * sizeof(uint8_t), "LonFram
  *   messages from the downlink queue and writes them to the USB interface. It
  *   is called periodically to handle downlink traffic.
  */
-LonStatusCode ProcessDownlinkRequests(int iface_index);
+LonStatusCode ProcessDownlinkRequests();
 
 /*
  * Opens a LON USB network interface.
  * Parameters:
- *   lon_dev_name: Logical name for the LON interface, for example "lon0"
- *   usb_dev_name: Host USB interface name, for example "/dev/ttyUSB0"
- *   iface_index: Interface index to be used in subsequent read, write, 
- *   		   and close calls for the interface
  *	 configured_iface_mode: LON interface configured_iface_mode, set to LON_IFACE_MODE_LAYER5
  *			   for layer 5 (host apps) or LON_IFACE_MODE_LAYER2 for
  *			   layer 2 (LON stacks)
- *   line_discipline: USB line discipline number, set to LDISCS_50 for
- *			   the U10 FT Rev C and U60 FT, and LDISCS_61 for the U10 FT
- *			   Rev A and B, U20 PL, U60 TP-1250, and U70 PL
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-LonStatusCode OpenLonUsbLink(char *lon_dev_name, char *usb_dev_name,
-					int *iface_index, LonUsbInterfaceMode configured_iface_mode,
-					LonUsbIfaceModel lon_usb_iface_model);
+LonStatusCode OpenLonUsbLink(LonUsbInterfaceMode configured_iface_mode);
 
 /*
  * Reads the LON USB interface unique ID from the state.
  * Parameters:
- *   iface_index: LON interface index returned by OpenLonUsbLink()
  *   uid_buffer: Buffer to receive the unique ID
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-LonStatusCode ReadUsbNiUid(int iface_index, IzotUniqueId *uid_buffer);
+LonStatusCode ReadUsbNiUid(IzotUniqueId *uid_buffer);
 
 /*
  * Checks if the LON USB link is ready.
@@ -661,22 +550,20 @@ LonStatusCode ReadUsbNiUid(int iface_index, IzotUniqueId *uid_buffer);
  * Returns:
  *   true if the interface is ready; false otherwise
  */
-bool LonUsbLinkReady(int iface_index);
+bool LonUsbLinkReady();
 
 /*
  * Writes a downlink message to the LON USB interface.
  * Parameters:
- *   iface_index: interface index returned by OpenLonUsbLink()
  *   in_msg: pointer to xLdvMessage or LdvExtendedMessage structure
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-LonStatusCode WriteLonUsbMsg(int iface_index, const LonDataFrame* in_msg);
+LonStatusCode WriteLonUsbMsg(const LonDataFrame* in_msg);
 
 /*
  * Reads an uplink message from the LON USB interface, if available.
  * Parameters:
- *   iface_index: interface index returned by OpenLonUsbLink()
  *   out_msg: pointer to xLdvMessage or LdvExtendedMessage structure
  * Returns:
  *   LonStatusNoError if a message is successfully read;
@@ -687,12 +574,11 @@ LonStatusCode WriteLonUsbMsg(int iface_index, const LonDataFrame* in_msg);
  *   available. If no full message is available, tests for timeout waiting
  *   for the LON interface unique ID (UID) and retries the UID read request.
  */
-LonStatusCode ReadLonUsbMsg(int iface_index, LonDataFrame *out_msg);
+LonStatusCode ReadLonUsbMsg( LonDataFrame *out_msg);
 
 /*
  * Feeds received bytes into the RX ring buffer for a LON USB interface.
  * Parameters:
- *   iface_index: interface index returned by OpenLonUsbLink()
  *   data: pointer to buffer of received bytes
  *   len: number of bytes in data buffer
  * Returns:
@@ -705,17 +591,17 @@ LonStatusCode ReadLonUsbMsg(int iface_index, LonDataFrame *out_msg);
  *   The data is copied into the RX ring buffer for later processing
  *   by ReadLonUsbMsg().
  */
-size_t LonUsbFeedRx(int iface_index, const uint8_t *data, size_t len);
+size_t LonUsbFeedRx(const uint8_t *data, size_t len);
 
 /*
  * Closes a LON USB network interface.
  * Parameters:
- *   iface_index: interface index returned by OpenLonUsbLink()
+ *   none
  * Returns:
  *   LonStatusNoError on success; LonStatusCode error code if unsuccessful
  */
-LonStatusCode CloseLonUsbLink(int iface_index);
+LonStatusCode CloseLonUsbLink();
 
-#endif // !LINK_IS(SINGLE_USB)
+#endif //LINK_IS(SINGLE_USB)
 
-#endif	// !defined(_LON_USB_LINK_H)
+#endif	// !defined(_LON_USB_SINGLE_LINK_H)

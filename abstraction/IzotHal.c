@@ -687,6 +687,13 @@ LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out)
     tio.c_cflag &= ~PARENB;       // no parity
     tio.c_cflag &= ~CSTOPB;       // 1 stop bit
     tio.c_cflag &= ~CRTSCTS;      // no HW flow control
+    // Belt-and-suspenders: ensure all echo flags are off.
+    // cfmakeraw() should clear these, but some implementations
+    // or CDC-ACM driver re-enumeration can leave them set, which
+    // causes the tty layer to feed received bytes back to the
+    // device; the device may then echo them back, producing
+    // duplicate reads of the same frame.
+    tio.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
     // Set a commonly used speed; for CDC-ACM many devices still expect it
     cfsetispeed(&tio, B115200);
     cfsetospeed(&tio, B115200);
@@ -699,7 +706,8 @@ LonStatusCode HalOpenUsb(const char *usb_dev_name, int ldisc, int *usb_fd_out)
                 usb_dev_name, strerror(errno), errno);
         return status;
     }
-    // Flush any pending I/O
+    // Flush any data that arrived between open() and tcsetattr()
+    // to prevent stale bytes from appearing on the first read
     tcflush(*usb_fd_out, TCIOFLUSH);
     // Assert DTR/RTS in case the interface requires it to exit reset
     int mflags = 0;
@@ -746,10 +754,11 @@ void HalCloseUsb(int fd)
  *   For Linux, it retries on EINTR and EAGAIN. For partial progress followed
  *   by error, the already-written byte count is returned via bytes_written.
  */
-LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written)
+extern LonStatusCode U60FT_WriteUSB_Data(const void* pSrc, size_t Count, size_t* BytesWritten);
+LonStatusCode HalWriteUsb(int fd, const void *buf, size_t len, size_t *bytes_written)
 {
-    LonStatusCode status = LonStatusNoError;
 #if OS_IS(LINUX)
+    LonStatusCode status = LonStatusNoError;
     const uint8_t *p = (const uint8_t*)buf;
     size_t total = 0;
     if (bytes_written) *bytes_written = 0;
@@ -812,6 +821,11 @@ LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written)
     //     if (rc > 0) { total += (size_t)rc; continue; }
     //     if (rc < 0) { if (bytes_written) *bytes_written = total; return LonStatusWriteFailed; }
     // }
+
+    (void)fd;
+
+    return U60FT_WriteUSB_Data(buf, len, bytes_written);
+/*
     LonDataFrame sicb;
 
     if (!buf || len == 0 || !bytes_written){
@@ -831,6 +845,7 @@ LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written)
     *bytes_written = len;
     //OsalPrintLog(LonStatusNoError, "Write %zd bytes", len);
     return status;
+*/
 #else
     // Placeholder: integrate with platform-specific write API when available.
     // size_t total = 0; const uint8_t *p = (const uint8_t*)buf;
@@ -841,6 +856,8 @@ LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written)
     // }
     // if (bytes_written) *bytes_written = total;
     // return LonStatusNoError;
+    LonStatusCode status = LonStatusNoError;
+
     if (bytes_written) *bytes_written = 0;
     OsalPrintLog(ERROR_LOG, LonStatusWriteFailed, "HalWriteUsb() not implemented");
     return LonStatusWriteFailed;
@@ -864,7 +881,8 @@ LonStatusCode HalWriteUsb(const void *buf, size_t len, size_t *bytes_written)
  *   or implement code to asynchronously call LonUsbFeedRx() to feed data
  *   received from the LON USB network interface into the RX ring buffer.
  */
-LonStatusCode HalReadUsb(void *buf, size_t len, ssize_t *bytes_read)
+extern LonStatusCode U60FT_ReadUSB_Data(void *pDst, size_t Count, ssize_t *BytesRead);
+LonStatusCode HalReadUsb(int fd, void *buf, size_t len, ssize_t *bytes_read)
 {
 #if OS_IS(LINUX)
     if (usb_fd < 0 || !buf || len == 0 || !bytes_read) {
@@ -906,17 +924,18 @@ LonStatusCode HalReadUsb(void *buf, size_t len, ssize_t *bytes_read)
     // Implement a non-blocking read from the LON USB network interface here,
     // or implement code to asynchronously call LonUsbFeedRx() to feed data 
     // received from the LON USB network interface into the RX ring buffer
-    #pragma message("Optional: implement OS-dependent definition of HalReadUsb()")
-    LonDataFrame sicb;
-
-
+    //#pragma message("Optional: implement OS-dependent definition of HalReadUsb()")
+    (void)fd;
     if (!buf || len == 0 || !bytes_read) {
         //OsalPrintLog(LonStatusInvalidParameter, "HalReadUsb invalid parameter");
         return LonStatusInvalidParameter;
     }
 
-  //  *bytes_read = read(fd, buf, len);
+return U60FT_ReadUSB_Data(buf, len, bytes_read);
 
+
+  //  *bytes_read = read(fd, buf, len);
+/*
     if(ReadLonLink(&sicb) != LonStatusNoError)
     {
         return LonStatusNoMessageAvailable;
@@ -938,6 +957,8 @@ LonStatusCode HalReadUsb(void *buf, size_t len, ssize_t *bytes_read)
     }
     //OsalPrintLog(LonStatusNoError, "Read %zd bytes", *bytes_read);
     return LonStatusNoError;
+*/
+
 #endif
 }
 
@@ -955,6 +976,7 @@ LonStatusCode HalReadUsb(void *buf, size_t len, ssize_t *bytes_read)
  *   For a Linux host, the IP interface name is defined in the 'iface'
  *   global.  The name is host-dependent and must match the name for
  *   the host.
+ *   TODO: add implementation for USB and MIP interfaces
  */ 
 LonStatusCode HalGetMacAddress(unsigned char *mac)
 {
@@ -967,7 +989,7 @@ LonStatusCode HalGetMacAddress(unsigned char *mac)
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1) {
         // Socket error
-        return LonStatusDeviceUniqeIdNotAvailable;
+        return LonStatusDeviceUniqueIdNotAvailable;
     }
 
     memset(&ifr, 0, sizeof(ifr));
@@ -977,7 +999,7 @@ LonStatusCode HalGetMacAddress(unsigned char *mac)
     // Linux uses SIOCGIFHWADDR
     if (ioctl(fd, SIOCGIFHWADDR, &ifr) == -1) {
         close(fd);
-        return LonStatusDeviceUniqeIdNotAvailable;
+        return LonStatusDeviceUniqueIdNotAvailable;
     }
     memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
@@ -1000,7 +1022,7 @@ LonStatusCode HalGetMacAddress(unsigned char *mac)
     memcpy(mac, pNeuronID, IZOT_PROGRAM_ID_LENGTH);
     return LonStatusNoError;
     
-    return LonStatusDeviceUniqeIdNotAvailable;
+    return LonStatusDeviceUniqueIdNotAvailable;
 #endif
 }
 

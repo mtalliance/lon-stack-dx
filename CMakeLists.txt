@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(lon_stack_dx
-    VERSION 4.0.2
+    VERSION 4.1.0
     DESCRIPTION "LON Stack DX for LON/IP and U10/U60 LON FT-compatible USB interfaces"
     LANGUAGES C
 )
@@ -51,9 +51,8 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs_custom.c
     lcs/lcs_eeprom.c
     lcs/lcs_iup.c
-#PARKER_START
-    #lcs/lcs_link.c
-#PARKER_END
+    lcs/lcs_link.c
+    lcs/lcs_single_link.c
     lcs/lcs_netmgmt.c
     lcs/lcs_network.c
     lcs/lcs_node.c
@@ -65,9 +64,8 @@ set(LON_STACK_DX_SOURCES
     lcs/lcs.c
     lon_udp/ipv4_to_lon_udp.c
     lon_udp/lon_udp_mapping_util.c
-#PARKER_START
-    #lon_usb/lon_usb_link.c
-#PARKER_END
+    lon_usb/lon_usb_link.c
+    lon_usb/lon_usb_single_link.c
     persistence/storage_persistence.c
     persistence/lon_persistence.c
 )
@@ -75,7 +73,7 @@ set(LON_STACK_DX_SOURCES
 set(LON_STACK_DX_HEADERS
     include/abstraction/IzotCal.h
 #PARKER START
-    #include/abstraction/IzotConfig.h
+    #include/abstraction/IzotConfig.h    // we copy the config else where
 #PARKER_END
     include/abstraction/IzotEndian.h
     include/abstraction/IzotHal.h
@@ -107,6 +105,7 @@ set(LON_STACK_DX_HEADERS
     include/lcs/lcs.h
     include/lon_udp/ipv4_to_lon_udp.h
     include/lon_usb/lon_usb_link.h
+    include/lon_usb/lon_usb_single_link.h
     include/persistence/storage_persistence.h
     include/persistence/lon_persistence.h
 )
@@ -135,7 +134,7 @@ target_compile_definitions(lon_stack_dx
     #OS_ID=OS_ID_LINUX
     OS_ID=OS_ID_FREERTOS
 #PARKER END
-    LINK_ID=LINK_ID_USB
+   # LINK_ID=LINK_ID_SINGLE_USB
     PROTOCOL_ID=PROTOCOL_ID_LON_NATIVE
     ISI_ID=ISI_ID_NO_ISI
     INITIAL_LOG_CATEGORIES=LOG_PACKET_TRACE

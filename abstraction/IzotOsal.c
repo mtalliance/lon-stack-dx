@@ -27,6 +27,18 @@
     #include <unistd.h>
 #endif
 
+/*
+#if OS_IS(FREERTOS)
+extern void DEBUG_LonStackInfo(const char *format, ...);
+
+#ifdef LONSTACK_USE_DEBUG_MENU
+#define DEBUG_LonStkInfo(S, ...)						DEBUG_LonStackInfo			(S,  ##__VA_ARGS__)
+#else
+#define DEBUG_LonStkInfo(S, ...)
+#endif
+#endif // OS_IS(FREERTOS)
+*/
+
 /*****************************************************************
  * Section: Semaphore Lock Management Function Definitions
  *****************************************************************/

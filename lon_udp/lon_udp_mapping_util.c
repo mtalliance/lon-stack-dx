@@ -190,12 +190,12 @@ IzotByte Ipv4GetArbitrarySourceAddress(void *lsMappingHandle,
                 IzotByte *pSourceIpAddress, const IzotByte *pDomainId, 
                 int domainIdLen, IzotByte *pEnclosedSource)
 {
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
     IzotByte enclosedSourceLen = 0;
     IzotByte foundAddress = FALSE;
     const IzotByte *pArbitraryAddress = NULL;
     IzotByte includeDomain = FALSE;
 
-#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
     // If we don't have a valid IP address, we can't do anything
     if (!is_connected) {
         return 0;
