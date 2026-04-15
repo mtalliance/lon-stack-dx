@@ -25,7 +25,6 @@
 #include "lcs/lcs_queue.h"
 #include "lcs/lcs_netmgmt.h"
 #include "lon_usb/lon_usb_single_link.h"
-//#include "lon_usb/lon_usb_single_link.h"
 
 // Unique ID fetch interval in milliseconds
 #define UNIQUE_ID_FETCH_INTERVAL 500
@@ -266,7 +265,7 @@ void LinkLayerUsbReceive(void)
 		return;
 	} else if (sicb.ni_command != LonNiIncomingL2Mode2Cmd) {
         // Not a layer 2 mode 2 packet--ignore the packet
-	  	return;
+	  	//return;
 	}
 
     // CRC check was performed by the LON network interface;
@@ -274,10 +273,11 @@ void LinkLayerUsbReceive(void)
     INCR_STATS(LcsL2Rx);
 
     // Check if the packet is for us
-    if (sicb.ni_command != LonNiIncomingL2Mode2Cmd || sicb.pdu[0] != LonNiLocalNetMgmtCmd) {
-        INCR_STATS(LcsMissed);
-        return;
-    }
+    //if (sicb.ni_command != LonNiIncomingL2Mode2Cmd || sicb.pdu[0] != LonNiLocalNetMgmtCmd) {
+//
+//        INCR_STATS(LcsMissed);
+//        return;
+//    }
 
     // CRC check was performed by the LON interface;
     // increment the valid packet received count

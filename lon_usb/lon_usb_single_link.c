@@ -1460,7 +1460,7 @@ LonStatusCode ReadLonUsbMsg(LonDataFrame *out_msg)
 		// TODO: Verify the -1 for PDU length; the length sent by the MIP includes the command byte, but the command byte is not included in the PDU field in the output message
 		out_msg->short_pdu_length = buffer.usb_ni_data_frame.short_pdu_length - 1;
 		//if (out_msg->short_pdu_length > sizeof(out_msg->pdu)) {   condition is always false 
-			out_msg->short_pdu_length = (uint8_t) sizeof(out_msg->pdu);
+			//out_msg->short_pdu_length = (uint8_t) sizeof(out_msg->pdu);
 		//}
 		memcpy(out_msg->pdu, buffer.usb_ni_data_frame.pdu, out_msg->short_pdu_length);
 		return LonStatusNoError;
@@ -1913,10 +1913,8 @@ LonStatusCode CheckUplinkCompleted(bool *completed)
 					state->have_reset = true;		// Signal reset received to ProcessDownlinkRequests()
 				}
 				// TODO: Clear any pending transactions?
-				// TODO: Alternate handling if not waiting for reset, for example if reset is unexpected or unsolicited				break;
-
-// TODO Validate if it is a real fall thru... there is no comment
-[[fallthrough]];  // Tells compiler this is intentional
+				// TODO: Alternate handling if not waiting for reset, for example if reset is unexpected or unsolicited
+  				break;
 
 			case LonNiCrcError:
 				OsalPrintLog(INFO_LOG, LonStatusNoError, "CheckUplinkCompleted: NI CRC error received");
@@ -2554,6 +2552,7 @@ void PrintUplinkCodePacket(char *prefix)
  */
 void IdentifyLonNi()
 {
+	// Alain Set flash led on MT823 using mode wink !!  
 	OsalPrintLog(INFO_LOG, LonStatusNoError, "IdentifyLonNi: LON Wink command received");
 }
 
