@@ -540,9 +540,18 @@ void OsalPrintLog(LogCategory category, LonStatusCode status_code, const char *s
         return;
 
     char formatted[OSAL_ERROR_STRING_MAXLEN];
+    if ((OsalGetLogCategories() & category) == ERROR_LOG)
+        snprintf(formatted, sizeof(formatted), "e-");
+    if ((OsalGetLogCategories() & category) == INFO_LOG)
+        snprintf(formatted, sizeof(formatted), "i-");
+    if ((OsalGetLogCategories() & category) == PACKET_TRACE_LOG)
+        snprintf(formatted, sizeof(formatted), "p-");
+    if ((OsalGetLogCategories() & category) == DETAIL_TRACE_LOG)
+        snprintf(formatted, sizeof(formatted), "d-");
+
     va_list args;
     va_start(args, status_string);
-    OsalFormatErrorString(formatted, sizeof(formatted), status_code, status_string, args);
+    OsalFormatErrorString(&formatted[2], sizeof(formatted)-2, status_code, status_string, args);
     va_end(args);
 
 #if OS_IS(LINUX)
