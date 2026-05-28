@@ -1942,6 +1942,12 @@ LonStatusCode CheckUplinkCompleted(bool *completed)
 							state->uplink_buffer.usb_ni_data_frame.pdu[BROADCAST_MSG_CODE_OFFSET + 5],
 							state->uplink_buffer.usb_ni_data_frame.pdu[BROADCAST_MSG_CODE_OFFSET + 6]);
 				}
+				else if (state->uplink_buffer.usb_ni_data_frame.short_pdu_length == 17 
+						&& state->uplink_buffer.usb_ni_data_frame.pdu[UNICAST_MSG_CODE_OFFSET-1] 
+						== IzotNmWink) {
+					// Process uplink network Wink message
+					IdentifyLonNi();
+				}
 				break;
 			case LonNiFlushCompleteCmd:
 				OsalPrintLog(PACKET_TRACE_LOG, LonStatusNoError, "CheckUplinkCompleted: NI Flush Complete message received");

@@ -843,13 +843,22 @@ IZOT_EXTERNAL_FN LonStatusCode IzotDatapointFlags(IzotDatapointDefinition* const
 {
     LonStatusCode status = LonStatusNoError;
     uint16_t flags = pDatapointDef->Flags;
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_PRIORITY) | (priority ? IZOT_DATAPOINT_PRIORITY : 0);
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_IS_OUTPUT) 
-            | ((direction == IzotDatapointDirectionIsOutput) ? IZOT_DATAPOINT_IS_OUTPUT : 0);
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_CONFIG_CLASS) | (isProperty ? IZOT_DATAPOINT_CONFIG_CLASS : 0);
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_PERSISTENT) | (persistent ? IZOT_DATAPOINT_PERSISTENT : 0);
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_CHANGEABLE) | (changeable ? IZOT_DATAPOINT_CHANGEABLE : 0);
-    pDatapointDef->Flags = (flags & ~IZOT_DATAPOINT_AUTHENTICATED) | (authenticated ? IZOT_DATAPOINT_AUTHENTICATED : 0);
+    flags &= (uint16_t)~(IZOT_DATAPOINT_PRIORITY |
+        IZOT_DATAPOINT_IS_OUTPUT |
+        IZOT_DATAPOINT_CONFIG_CLASS |
+        IZOT_DATAPOINT_PERSISTENT |
+        IZOT_DATAPOINT_CHANGEABLE |
+        IZOT_DATAPOINT_AUTHENTICATED);
+
+    flags |= (priority ? IZOT_DATAPOINT_PRIORITY : 0) |
+        ((direction == IzotDatapointDirectionIsOutput) ? IZOT_DATAPOINT_IS_OUTPUT : 0) |
+        (isProperty ? IZOT_DATAPOINT_CONFIG_CLASS : 0) |
+        (persistent ? IZOT_DATAPOINT_PERSISTENT : 0) |
+        (changeable ? IZOT_DATAPOINT_CHANGEABLE : 0) |
+        (authenticated ? IZOT_DATAPOINT_AUTHENTICATED : 0);
+
+    // Add service type flag as always confirable for datapoints defined through this API
+    pDatapointDef->Flags = flags | IZOT_DATAPOINT_SERVICE_CONFIG; 
     return(status);
 }
 
@@ -878,7 +887,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotDatapointBind(int nvIndex, IzotByte address, 
 
     status = IzotQueryDpConfig(nvIndex, &DatapointConfig);
 
-    if (status != LonStatusNoError) {
+    if (status == LonStatusNoError) {
         IZOT_SET_ATTRIBUTE_P(&DatapointConfig, IZOT_DATAPOINT_ADDRESS_HIGH, address >> 4);
         IZOT_SET_ATTRIBUTE_P(&DatapointConfig, IZOT_DATAPOINT_ADDRESS_LOW, address);
         IZOT_SET_ATTRIBUTE_P(&DatapointConfig, IZOT_DATAPOINT_SELHIGH, (uint8_t)(selector >> 8));
@@ -1245,7 +1254,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotCreateStack(const IzotStackInterfaceData* con
  *   and is called once for each static datapoint.  This function can be
  *   called only after <IzotCreateStack>, but before <IzotStartStack>.
  */
-IZOT_EXTERNAL_FN LonStatusCode IzotRegisterStaticDatapoint(IzotDatapointDefinition* const pDatapointDef) {
+IZOT_EXTERNAL_FN LonStatusCode IzotRegisterStaticDatapoint(const IzotDatapointDefinition* pDatapointDef) {
     LonStatusCode status = LonStatusNoError;
     NVDefinition d;
     IzotBits16 returnValue;
@@ -1306,7 +1315,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotRegisterStaticDatapoint(IzotDatapointDefiniti
     if (returnValue == -1) {
         status = LonStatusInvalidParameter;
     } else {
-        pDatapointDef->NvIndex = returnValue;
+        //pDatapointDef->NvIndex = returnValue;
     }
 
     return status;

@@ -177,7 +177,7 @@ LonStatusCode ManualServiceRequestMessage(void) {
  *******************************************************************************/
 void NMNDRespond(NtwkMgmtMsgType msgType, LonStatusCode success, 
 APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
-    IzotByte code;
+    IzotByte code = 0;
     IzotByte subCode;
     int len = 0;
     IzotByte data[1];
@@ -190,11 +190,11 @@ APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
 
     if (msgType == NM_MESSAGE) {
         subCode = apduPtr->code.nm.nmCode;
-        code = (success != LonStatusNoError ? NM_resp_success : NM_resp_failure)
+        code = (success == LonStatusNoError ? NM_resp_success : NM_resp_failure)
                 | subCode;
     } else {
         subCode = apduPtr->code.nd.ndCode;
-        code = (success != LonStatusNoError ? ND_resp_success : ND_resp_failure)
+        code = (success == LonStatusNoError ? ND_resp_success : ND_resp_failure)
                 | subCode;
     }
     // Look for expanded commands.  
@@ -2522,6 +2522,7 @@ void HandleNM(APPReceiveParam *appReceiveParamPtr, APDU *apduPtr) {
         break;
     case NM_QUERY_SNVT:
         HandleNMQuerySIData(appReceiveParamPtr, apduPtr);
+        OsalPrintLog(ERROR_LOG, 0, "NM_QUERY_SNVT: %02X, ReqID: %d", apduPtr->code.nm.nmCode, appReceiveParamPtr->reqId);
         break;
     case NM_NV_FETCH:
         HandleNMNVFetch(appReceiveParamPtr, apduPtr);
