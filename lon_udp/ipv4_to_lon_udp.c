@@ -140,6 +140,7 @@ static IzotByte getDomainLenEncoding(int domainLen)
  *  <void>.   
  *
  */
+#if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 static void RestoreIpMembership(void)
 {
     IzotByte i;
@@ -164,6 +165,7 @@ static void RestoreIpMembership(void)
         AddIpMembership(bc_addr);
     }
 }
+#endif
 
 #if IPV4_INCLUDE_LTVX_LSUDP_TRANSLATION
 
@@ -382,17 +384,17 @@ IzotByte *pDestAddr, uint16_t *pDestPort
  */
 static void Ipv4SendAnnouncement(IzotByte *msg, IzotByte len)
 {
-    LKSendParam  *lkSendParamPtr; /* Param in lkOutQ or lkPriOutQ.   */
-    IzotByte     *npduPtr;        /* Pointer to NPDU being formed.   */
+    //LKSendParam  *lkSendParamPtr; /* Param in lkOutQ or lkPriOutQ.   */
+    //IzotByte     *npduPtr;        /* Pointer to NPDU being formed.   */
 
     if (!QueueFull(&gp->lkOutQ)) {
-        lkSendParamPtr  = QueueTail(&gp->lkOutQ);
+        //lkSendParamPtr  = QueueTail(&gp->lkOutQ);
     } else {
         return;
     }
     
     // ptr to NPDU constructed.
-    npduPtr = (IzotByte *)(lkSendParamPtr + 1);
+    //npduPtr = (IzotByte *)(lkSendParamPtr + 1);
 
 #if 0
 // TBD: following block crashes
@@ -1151,9 +1153,8 @@ void SendAnnouncement(void)
  */
 void SetLsAddressFromIpAddr(void)
 {
-    IzotDomain domain;
-
 #if 0
+    IzotDomain domain;
 
     memset(&domain, 0, sizeof(IzotDomain));
     

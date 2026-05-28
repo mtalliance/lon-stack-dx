@@ -272,7 +272,7 @@ void QueueWrite(Queue *queue_in_out)
     	OsalPrintLog(ERROR_LOG, LonStatusNoBufferAvailable, "QueueWrite: Queue is full");
         return;
     }
-    uint8_t *new_entry = queue_in_out->tail;
+    //uint8_t *new_entry = queue_in_out->tail;
     queue_in_out->queueEntries++;
     // Increment queue tail to next entry
     queue_in_out->tail = queue_in_out->tail + queue_in_out->entrySize;
