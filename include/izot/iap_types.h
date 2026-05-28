@@ -65,15 +65,15 @@ typedef struct {
     IzotWord millisecond;   // 0 -- 999 (read with IZOT_GET_UNSIGNED_WORD(n))
 } SNVT_elapsed_tm;
 
-// Structure: SNVT_flow_f (Index 53)
-// Flow volume (liters/second; 4-byte float).
-#define SNVT_flow_f_index 53
-typedef IzotFloat SNVT_flow_f;
+// Structure: SNVT_press_f (Index 59)
+// Pressure (pa; 4-byte float).  scaled value = 1 * 10^-3 * (Raw + 0)).
+#define SNVT_press_f_index 59
+typedef IzotFloat SNVT_press_f;
 
-// Structure: SNVT_flow_p (Index 161)
-// Flow volume (cubic meters/hour; 2-byte unsigned long; scaled value = 1 * 10^-2 * (Raw + 0)).
-typedef IzotWord SNVT_flow_p;
-#define SNVT_flow_p_index 161
+// Structure: SNVT_press (Index 30)
+// Pressure (kpa; 2-byte signed long; scaled value = 1 * 10^-1 * (Raw + 0)).
+typedef IzotWord SNVT_press;
+#define SNVT_press_index 30
 
 // Structure: SNVT_switch (Index 95)
 // Switch control with an analog level and discrete state (level and state; 2-byte structure).

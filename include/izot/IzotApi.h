@@ -727,7 +727,7 @@ IZOT_EXTERNAL_FN LonStatusCode IzotCreateStack(const IzotStackInterfaceData* con
  *   and is called once for each static datapoint.  This function can be
  *   called only after <IzotCreateStack>, but before <IzotStartStack>.
  */
-IZOT_EXTERNAL_FN LonStatusCode IzotRegisterStaticDatapoint(IzotDatapointDefinition* const pDatapointDef);
+IZOT_EXTERNAL_FN LonStatusCode IzotRegisterStaticDatapoint(const IzotDatapointDefinition* pDatapointDef);
 
 /*
  * Registers a virtual memory address range and enable DMF.
