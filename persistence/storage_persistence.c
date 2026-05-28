@@ -573,7 +573,7 @@ static LonStatusCode OpenStorageSegment(const IzotPersistentSegType persistent_s
 static LonStatusCode InitSegmentMap(const IzotPersistentSegType persistent_seg_type)
 {
     LonStatusCode status = LonStatusNoError;
-    PersistentTransactionRecord transactionRecord = {TX_SIGNATURE, TX_DATA_VALID};
+    // PersistentTransactionRecord transactionRecord = {TX_SIGNATURE, TX_DATA_VALID};
     size_t region_offset;   // Offset of this region from start of storage
     size_t region_size;     // Size of this erase region
     int number_of_blocks;   // Number of blocks in this region

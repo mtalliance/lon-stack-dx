@@ -360,7 +360,7 @@ LonStatusCode IzotPersistentSegRestore(IzotPersistentSegType persistent_seg_type
                 "IzotPersistentSegRestore: Segment %s is invalid or unitialized, skipping restore",
                 IzotPersistentGetSegName(persistent_seg_type));
     } else {
-        IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistent_seg_type);
+        //IzotPersistentSegType returnedSegType = IzotPersistentSegOpenForRead(persistent_seg_type);
         memset(&hdr, 0, sizeof(hdr));
         if (persistent_seg_type != IzotPersistentSegUnassigned) {
             if (IzotPersistentSegRead(persistent_seg_type, sizeof(PersistentTransactionRecord), sizeof(hdr), &hdr) != 0) {

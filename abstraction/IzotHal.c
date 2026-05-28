@@ -108,11 +108,11 @@ LonStatusCode persistentMemError = LonStatusNoError; // Last persistent memory e
 IzotBool persistentMemInitialized = FALSE; // Flag to indicate if flash is initialized
 
 #if OS_IS(LINUX)
-static const char *configDirectoryDefault = "/var/lib/lon-device-stack";
-                            // LON application configuration file path
-                            // Overridable via LON_STACK_DX_CONFIG_FILE environment variable
-static char configDirectory[512] = "";
-                            // LON Stack configuration directory
+    static const char *configDirectoryDefault = "/var/lib/lon-device-stack";
+                                // LON application configuration file path
+                                // Overridable via LON_STACK_DX_CONFIG_FILE environment variable
+    static char configDirectory[512] = "";
+                                // LON Stack configuration directory
 static int storageFd[IzotPersistentSegNumSegmentTypes] = {-1}; 
                             // File descriptors for segment data storage devices
 static const char *iface = "eth0"; // Hardware dependent IP interface name
@@ -121,6 +121,11 @@ static const char *iface = "eth0"; // Hardware dependent IP interface name
 #if PROCESSOR_IS(MC200)
 static mdev_t *flashFd = NULL; // File descriptor for the flash device
 #endif // PROCESSOR_IS(MC200)
+
+#ifndef EEP_STORAGE_RAM    
+    #define EEP_STORAGE_RAM TRUE
+#endif 
+#define RAM_REGION_SIZE (4096*4) // 16KB of RAM for persistent storage
 
 /*****************************************************************
  * Section: Storage Function Definitions
@@ -214,6 +219,9 @@ LonStatusCode HalCreateConfigDirectory(const char *path, mode_t mode) {
         return persistentMemError = LonStatusPersistentDataDirError;
     }
     return persistentMemError;
+#elif defined(EEP_STORAGE_RAM)
+    // No directory creation needed for RAM-based storage
+    return persistentMemError = LonStatusNoError;
 #else
     // Not implemented for this platform
     return persistentMemError = LonStatusPersistentDataDirError;
@@ -248,6 +256,9 @@ LonStatusCode HalInitStorage(void)
 #elif PROCESSOR_IS(MC200)
     return persistentMemError = (iflash_drv_init() 
             ? LonStatusNoError : LonStatusPersistentDataFailure);
+#elif defined(EEP_STORAGE_RAM)
+    // No initialization needed for RAM-based storage
+    return persistentMemError = LonStatusNoError;
 #else
     return persistentMemError = LonStatusPersistentDataFailure; // No flash driver available
 #endif
@@ -288,6 +299,10 @@ LonStatusCode HalStorageInfo(size_t *offset, size_t *region_size,
     *offset             = FREERTOS_FLASH_OFFSET;
     *erase_required     = true;
     *erase_value        = 0xFF;
+#elif defined(EEP_STORAGE_RAM)
+    *offset             = 0;
+    *erase_required     = false;
+    *erase_value        = 0;
 #endif 
 
 #if OS_IS(LINUX) || PROCESSOR_IS(MC200)
@@ -295,6 +310,11 @@ LonStatusCode HalStorageInfo(size_t *offset, size_t *region_size,
     *number_of_blocks   = NUM_OF_BLOCKS;
     *block_size         = BLOCK_SIZE;
     *number_of_regions  = NO_OF_REGIONS;
+#elif defined(EEP_STORAGE_RAM)
+    *region_size        = RAM_REGION_SIZE;
+    *number_of_blocks   = 1;
+    *block_size         = RAM_REGION_SIZE;
+    *number_of_regions  = 1;
 #else
     *offset             = 0;
     *region_size        = 0;
@@ -375,7 +395,8 @@ LonStatusCode HalOpenStorageSegment(
         return persistentMemError = LonStatusNoError;
     }
     persistentMemError = ((flashFd = (mdev_t *)iflash_drv_open("iflash", 0)) != NULL) 
-            ? LonStatusNoError : LonStatusPersistentDataAccessError);
+            ? LonStatusNoError : LonStatusPersistentDataAccessError;
+#elif defined(EEP_STORAGE_RAM)
 #else
     persistentMemError = LonStatusPersistentDataAccessError;
     OsalPrintLog(ERROR_LOG, persistentMemError, "HalOpenStorageSegment: No persistent storage driver available");
@@ -405,6 +426,7 @@ LonStatusCode HalCloseStorageSegment(const IzotPersistentSegType persistent_seg_
         iflash_drv_close(flashFd);
         flashFd = NULL;
     }
+#elif defined(EEP_STORAGE_RAM)
 #endif
     return persistentMemError = LonStatusNoError;
 }
@@ -485,6 +507,7 @@ LonStatusCode HalPrepareStorageSegment(
     // Erase the storage region by filling the specified area with erase_value
     return persistentMemError = (iflash_drv_erase(flashFd, start, size) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
+#elif defined(EEP_STORAGE_RAM)
 #else
     OsalPrintLog(ERROR_LOG, LonStatusPersistentDataAccessError, "HalPrepareStorageSegment: No persistent storage driver available"); 
     return persistentMemError = LonStatusPersistentDataAccessError;
@@ -558,6 +581,7 @@ LonStatusCode HalWriteStorageSegment(
 #elif PROCESSOR_IS(MC200)
     return persistentMemError = (iflash_drv_write(flashFd, buf, len, addr) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
+#elif defined(EEP_STORAGE_RAM)
 #else
     return persistentMemError = LonStatusPersistentDataAccessError;
 #endif
@@ -632,6 +656,7 @@ LonStatusCode HalReadStorageSegment(
 #elif PROCESSOR_IS(MC200)
     return persistentMemError = (iflash_drv_read(flashFd, buf, size, start) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
+#elif defined(EEP_STORAGE_RAM)
 #else
     return persistentMemError = LonStatusPersistentDataAccessError;
 #endif
