@@ -508,6 +508,8 @@ LonStatusCode HalPrepareStorageSegment(
     return persistentMemError = (iflash_drv_erase(flashFd, start, size) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
 #elif defined(EEP_STORAGE_RAM)
+        // No preparation needed for RAM-based storage
+        return LonStatusNoError;
 #else
     OsalPrintLog(ERROR_LOG, LonStatusPersistentDataAccessError, "HalPrepareStorageSegment: No persistent storage driver available"); 
     return persistentMemError = LonStatusPersistentDataAccessError;
@@ -582,6 +584,10 @@ LonStatusCode HalWriteStorageSegment(
     return persistentMemError = (iflash_drv_write(flashFd, buf, len, addr) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
 #elif defined(EEP_STORAGE_RAM)
+        // Write to RAM-based storage
+        // In a real implementation, you would write to a specific RAM region.
+        // For this example, we simply ignore the write since it's not persistent.
+        return LonStatusNoError;
 #else
     return persistentMemError = LonStatusPersistentDataAccessError;
 #endif
@@ -657,6 +663,10 @@ LonStatusCode HalReadStorageSegment(
     return persistentMemError = (iflash_drv_read(flashFd, buf, size, start) 
             ? LonStatusNoError : LonStatusPersistentDataAccessError);
 #elif defined(EEP_STORAGE_RAM)
+        // Read from RAM-based storage
+        // In a real implementation, you would read from a specific RAM region.
+        // For this example, we simply return an error since there's no actual storage.
+         return LonStatusNoError;
 #else
     return persistentMemError = LonStatusPersistentDataAccessError;
 #endif
