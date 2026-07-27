@@ -126,8 +126,12 @@ extern "C" {
 #ifndef MAX
 #define MAX(x,y) (((x)>(y))?(x):(y))
 #endif
-#define max(a, b) MAX(a, b)
-#define min(a, b) MIN(a, b)
+
+#ifndef  __cplusplus
+    #define max(a, b) MAX(a, b)
+    #define min(a, b) MIN(a, b)
+#endif
+
 #endif
 
 // Initialization opitions

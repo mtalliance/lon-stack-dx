@@ -22,6 +22,7 @@ extern "C"
 
 #include <stddef.h>
 #include "izot/IzotPlatform.h"
+#include "izot/lon_types.h"
 
 #if OS_IS(LINUX)
 #include <stdlib.h>

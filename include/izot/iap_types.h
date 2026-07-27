@@ -78,10 +78,10 @@ typedef IzotWord SNVT_press;
 // Structure: SNVT_switch (Index 95)
 // Switch control with an analog level and discrete state (level and state; 2-byte structure).
 #define SNVT_switch_index 95
-typedef struct {
-    IzotByte value;         // Level in percent; 0 -- 200; <scaled value> = (<raw value> * 5) * (10^-1)
-    toggle_state_t state;   // On/Off state
-} SNVT_switch;
+// typedef struct {
+//     IzotByte value;         // Level in percent; 0 -- 200; <scaled value> = (<raw value> * 5) * (10^-1)
+//     toggle_state_t state;   // On/Off state
+// } SNVT_switch;
 
 // Structure: SNVT_temp_f (Index 63)
 // Temperature (degrees Celsius; 4-byte float).

@@ -10,6 +10,8 @@
  */
 
 #include "izot/IzotApi.h"
+#include "abstraction/IzotHal.h"
+
 #if LINK_IS(ETHERNET) || LINK_IS(WIFI)
 #include "lon_udp/ipv4_to_lon_udp.h"
 #endif

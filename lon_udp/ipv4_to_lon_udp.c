@@ -1200,7 +1200,7 @@ void SetLsAddressFromIpAddr(void)
  *  Initialize the Wi-Fi interface
  *
  *  Returns:
- *  LonApiError on unsuccessful exit LonApiNoError otherwise.
+ *  LonStatusCode on unsuccessful exit LonApiNoError otherwise.
  *
  */
 LonStatusCode WiFiInit(void)

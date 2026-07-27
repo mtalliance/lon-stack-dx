@@ -14,9 +14,14 @@
 #define DEFINED_PERSISTENT_STORAGE_H
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "izot/IzotPlatform.h"
+#include "izot/lon_types.h"
+#include "abstraction/IzotOsal.h"
+#include "abstraction/IzotHal.h"
+#include "izot/IzotApi.h"
 
 #ifdef FLASH_DEBUG
 	#define FLASH_PRINTF	wmprintf

@@ -12,6 +12,7 @@
 
 #include "lcs/lcs_timer.h"
 #include "izot/iap_types.h"
+#include "abstraction/IzotOsal.h"
 
 /*
  * Starts a one-shot timer.
@@ -31,7 +32,7 @@ void SetLonTimer(LonTimer *timer, uint32_t duration)
 	if (timer) {
 		if (duration) {
 			// Limit duration
-			duration = min(duration, LON_TIMER_MAX_DURATION);
+			duration = MIN(duration, LON_TIMER_MAX_DURATION);
 			timer->repeatTimeout = 0;
 			timer->expiration = OsalGetTickCount() + duration;
 
@@ -62,8 +63,8 @@ void SetLonRepeatTimer(LonTimer *timer, uint32_t first_duration, uint32_t repeat
 {
 	if (timer) {
 		// Limit durations
-		first_duration = min(first_duration, LON_TIMER_MAX_DURATION);
-		repeat_duration = min(repeat_duration, LON_TIMER_MAX_DURATION);
+		first_duration = MIN(first_duration, LON_TIMER_MAX_DURATION);
+		repeat_duration = MIN(repeat_duration, LON_TIMER_MAX_DURATION);
 
 		SetLonTimer(timer, first_duration);
 		timer->repeatTimeout = repeat_duration;

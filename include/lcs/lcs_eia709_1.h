@@ -14,6 +14,7 @@
 #define _EIA709_1_H
 
 #include "lcs/lcs_platform.h"
+#include "izot/lon_types.h"
 
 #ifndef MIN
    #define MIN(x,y) (((x)<(y))?(x):(y))

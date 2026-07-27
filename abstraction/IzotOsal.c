@@ -13,6 +13,8 @@
  */
 
 #include "izot/IzotPlatform.h"
+#include "abstraction/IzotOsal.h"
+#include "lcs/lcs_node.h"
 
 #if PROCESSOR_IS(MC200)
     #include <wm_os.h>

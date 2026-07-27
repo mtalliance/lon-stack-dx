@@ -22,9 +22,10 @@ extern "C"
 #endif  // __cplusplus
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 #include "izot/IzotPlatform.h"
-#include "abstraction/IzotOsal.h"
+#include "izot/lon_types.h"
 
 #define LINUX_FLASH_OFFSET      0
 #define FREERTOS_FLASH_OFFSET   0x6000

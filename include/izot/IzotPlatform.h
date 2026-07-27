@@ -1347,12 +1347,31 @@ typedef IzotBits16   nlong;
 typedef IzotUbits16  nulong;
 typedef IzotByte     BitField;
 
+    /*
+     *  Macros: LON_GET_UNSIGNED_S32_TYPE, LON_SET_UNSIGNED_S32_TYPE
+     *  Converts LonDoubleWord into a LonUbits32
+     *  and converts a LonUbits32 into a LonDoubleWord.
+     */
+    #define LON_GET_UNSIGNED_S32_TYPE(n)    (	((LonUbits32)((IzotByte)(n).bytes[0] << 24)) \
+    										   |((LonUbits32)((IzotByte)(n).bytes[1] << 16)) \
+    										   |((LonUbits32)((IzotByte)(n).bytes[2] << 8)) \
+    										   |((LonUbits32)((IzotByte)(n).bytes[3])))
+    #define LON_SET_UNSIGNED_S32_TYPE(n, v)		(n).bytes[0] = (IzotByte)((v)>>24); \
+    											(n).bytes[1] = (IzotByte)((v)>>16); \
+    											(n).bytes[2] = (IzotByte)((v)>>8); \
+    											(n).bytes[3] = (IzotByte)((v))
+
+    /*
+     *  Macros: LON_GET_SIGNED_DOUBLEWORD, LON_SET_SIGNED_DOUBLEWORD
+     *  Converts LonDoubleWord into a IzotBits32
+     *  and converts a IzotBits32 into a LonDoubleWord.
+     */
+    #define LON_GET_SIGNED_S32_TYPE(n)    ((IzotBits32)LON_GET_UNSIGNED_S32_TYPE(n))
+    #define LON_SET_SIGNED_S32_TYPE(n, v) LON_SET_UNSIGNED_S32_TYPE(n, v)
+
+
 #include "common/bitfield.h"
-#include "lcs/lcs_timer.h"
-#include "lcs/lcs_node.h"
-#include "abstraction/IzotOsal.h"
-#include "abstraction/IzotHal.h"
-#include "abstraction/IzotCal.h"
+
 
 #endif  /* _IZOT_PLATFORM_H */
 

@@ -50,7 +50,7 @@
 
 #if PROCESSOR_IS(STM32)
     // For STM32, use CMSIS intrinsic functions for byte swapping
-    #include "cmsis_gcc.h"
+    //#include "cmsis_gcc.h"
     #define EndianSwap16(x)        __REV16(x) 
     #define EndianSwap32(x)        __REV(x)
 #else

@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include "izot/IzotApi.h"
 #include "lcs/lcs_platform.h"
+#include "abstraction/IzotHal.h"
 #include "lon_usb/lon_usb_single_link.h"
 
 #if LINK_IS(SINGLE_USB)

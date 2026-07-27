@@ -11,11 +11,119 @@
 
 #ifndef _LON_TYPES_H
 #define _LON_TYPES_H
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+// ===== CRITICAL: Define macros BEFORE IzotPlatform.h include =====
+// These macros are needed by other headers during the circular include chain
+
+// Maximum length of the domain identifier, in bytes
+// The domain identifier can be zero, one, three, or
+// IZOT_DOMAIN_ID_MAX_LENGTH (6) bytes long.  Space for the largest possible
+// identifier is allocated in various structures and message types. See
+// <IzotDomain> for the domain table structure.
+ #define IZOT_DOMAIN_ID_MAX_LENGTH    6
+
+// Length of the authentication key, stored in the domain table (<IzotDomain>)
+#define IZOT_AUTHENTICATION_KEY_LENGTH   6
+
+// Length of the Open Media Authentication (OMA) key, in bytes
+#define IZOT_OMA_AUTHENTICATION_KEY_LENGTH   12
+
+// Length of the application's program identifier, in bytes
+#define IZOT_PROGRAM_ID_LENGTH   8
+
+// Length of the location identifier, in bytes
+#define IZOT_LOCATION_LENGTH     6
+
+// Length of the node's unique identifier, in bytes;
+// the Unique ID is also known as the Neuron ID or MAC ID
+#define IZOT_UNIQUE_ID_LENGTH    6
+
+// Number of communication control bytes
+#define IZOT_COMMUNICATIONS_PARAMETER_LENGTH 7
+
+// Custom channel type ID; see stdxcvr.xml for all channel types
+#define IZOT_CUSTOM_CHANNEL_TYPE_ID 30
+
+// LON Stack Constants
+#define PROTOCOL_VERSION   0   /* Protocol version                      */
+#define MAX_DOMAINS        2   /* Maximum # of domains allowed          */
+
+/* Flex domain indicates that the message was received in flex domain when
+   domain index is 2 */
+#define FLEX_DOMAIN        2   
+      
+/* When the application layer communicates with the transport or session layer,
+   the domain index for the outgoing message can be either set by the application 
+   layer or computed by the transport or session layer based on the destination 
+   address.  This value is used only in the TSASenParam structure.      */
+#define COMPUTE_DOMAIN_INDEX 3 
+
+#define MAX_GROUP_NUMBER 63    /* Maximum number of a node in a group   */
+
+/* Maximum number of array network variables allowed in
+    the application program. This constant is used to allocate
+    space that keeps track of all arrays and their dimension */
+#define MAX_NV_ARRAYS 10
+
+/* Maximum number of network output variables that can
+    be scheduled to be sent out at any point in time */
+#define MAX_NV_OUT     5
+
+/* To implement synchronous variables, the values of the
+    variables are to be stored along with index in the queue.
+    Define the maximum size (in bytes) of a network variable
+    in the application program. This is used for storage allocation. */
+#define MAX_NV_LENGTH 228
+
+/* Maximum number of network input variables that can
+    be scheduled to be polled at any point in time */
+#define MAX_NV_IN     50
+
+/* Maximum number of bytes in data array for msg_in, msg_out, resp_in etc.
+    This value is indepedent of application buffer sizes mentioned
+    earlier. Clearly it does not make sense for this value to be
+    larger than application buffer size (out or in). */
+#define MAX_DATA_SIZE 255
+
+// Maximum size of message on the wire (might be over sized a byte or two for safety)
+#ifndef MAX_PDU_SIZE
+#define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
+#endif
+
+// Maximum LON MAC layer message size (bytes) for non-expanded non-extended
+// and extended messages,and expanded non-extended and extended messages with
+// framesync byte-stuffing; the LON MAC layer can carry ISO/IEC 14908-1
+// payloads up to 228 bytes, or UDP payloads up to 1280 bytes
+#define MAX_LON_MSG_NON_EX_LEN		240
+#define MAX_EXP_LON_MSG_NON_EX_LEN	(2*MAX_LON_MSG_NON_EX_LEN+4)
+#define MAX_LON_MSG_EX_LEN			1280
+#define MAX_EXP_LON_MSG_EX_LEN		(2*MAX_LON_MSG_EX_LEN+4)
+
+#define NUM_ADDR_TBL_ENTRIES   254     /* # of address table entries; maximum supported value is 255 */
+
+#define RECEIVE_TRANS_COUNT    16      /* Can be > 16 for Ref. Impl */
+
+#define NV_TABLE_SIZE          254     /* Check management tool for any restriction on maximum size */
+
+#define NV_ALIAS_TABLE_SIZE    254     /* Check management tool for any restriction on maximum size */
+
+// LON/IP constants
+#define BROADCAST_PREFIX       0xEFC00000
+#define IP_ADDRESS_LEN         4
+#define IBOL_FINISH            0xFF
+
+// ===== END of critical macros needed before IzotPlatform.h =====
 
 #include "izot/IzotPlatform.h"
 #include "izot/iap_types.h"       // IAP type definitions
 #include <stdint.h>
 
+// Parameters for single-ended and special-purpose mode transceivers;
+// see <IzotDirectModeTransceiver> for direct-mode transceiver parameters
+typedef IzotByte IzotTransceiverParameters[IZOT_COMMUNICATIONS_PARAMETER_LENGTH];
 
 // Return status codes
 typedef enum {
@@ -256,8 +364,8 @@ typedef enum {
 #define IZOT_SET_SIGNED_WORD(n, v)         IZOT_SET_UNSIGNED_WORD(n, v)
 #define IZOT_GET_UNSIGNED_DOUBLEWORD(n)    ((((uint32_t)IZOT_GET_UNSIGNED_WORD((n).msw)) << 16) \
                                           +(uint32_t)IZOT_GET_UNSIGNED_WORD((n).lsw))
-#define IZOT_SET_UNSIGNED_DOUBLEWORD(n, v) IZOT_SET_UNSIGNED_WORD((n).msw, (uint16_t) ((v) >> 16)); \
-                                          IZOT_SET_UNSIGNED_WORD((n).lsw, (uint16_t) (v))
+#define IZOT_SET_UNSIGNED_DOUBLEWORD(n, v)  IZOT_SET_UNSIGNED_WORD((n).msw, (uint16_t) ((v) >> 16)); \
+                                            IZOT_SET_UNSIGNED_WORD((n).lsw, (uint16_t) (v))
 #define IZOT_GET_SIGNED_DOUBLEWORD(n)    ((int32_t)IZOT_GET_UNSIGNED_DOUBLEWORD(n))
 #define IZOT_SET_SIGNED_DOUBLEWORD(n, v) IZOT_SET_UNSIGNED_DOUBLEWORD(n, v)
 
@@ -266,39 +374,6 @@ typedef enum {
 #define IZOT_GET_ATTRIBUTE_P(var, n)         ((((var)->n##_FIELD) & n##_MASK) >> n##_SHIFT)
 #define IZOT_SET_ATTRIBUTE(var, n, value)    ((var).n##_FIELD = (((var).n##_FIELD) & ~n##_MASK) | ((((value) << n##_SHIFT)) & n##_MASK))
 #define IZOT_SET_ATTRIBUTE_P(var, n, value)  ((var)->n##_FIELD = (((var)->n##_FIELD) & ~n##_MASK) | ((((value) << n##_SHIFT)) & n##_MASK))
-
-// Maximum length of the domain identifier, in bytes
-// The domain identifier can be zero, one, three, or
-// IZOT_DOMAIN_ID_MAX_LENGTH (6) bytes long.  Space for the largest possible
-// identifier is allocated in various structures and message types. See
-// <IzotDomain> for the domain table structure.
- #define IZOT_DOMAIN_ID_MAX_LENGTH    6
-
-// Length of the authentication key, stored in the domain table (<IzotDomain>)
-#define IZOT_AUTHENTICATION_KEY_LENGTH   6
-
-// Length of the Open Media Authentication (OMA) key, in bytes
-#define IZOT_OMA_AUTHENTICATION_KEY_LENGTH   12
-
-// Length of the application's program identifier, in bytes
-#define IZOT_PROGRAM_ID_LENGTH   8
-
-// Length of the location identifier, in bytes
-#define IZOT_LOCATION_LENGTH     6
-
-// Length of the node's unique identifier, in bytes;
-// the Unique ID is also known as the Neuron ID or MAC ID
-#define IZOT_UNIQUE_ID_LENGTH    6
-
-// Number of communication control bytes
-#define IZOT_COMMUNICATIONS_PARAMETER_LENGTH 7
-
-// Custom channel type ID; see stdxcvr.xml for all channel types
-#define IZOT_CUSTOM_CHANNEL_TYPE_ID 30
-
-// Parameters for single-ended and special-purpose mode transceivers;
-// see <IzotDirectModeTransceiver> for direct-mode transceiver parameters
-typedef IzotByte IzotTransceiverParameters[IZOT_COMMUNICATIONS_PARAMETER_LENGTH];
 
 // Holds the unique ID
 typedef IzotByte IzotUniqueId[IZOT_UNIQUE_ID_LENGTH];
@@ -509,67 +584,7 @@ typedef IZOT_ENUM_BEGIN(IzotServiceLedPhysicalState) {
  * Section: LON Stack Constants
  *****************************************************************/
 
-#define PROTOCOL_VERSION   0   /* Protocol version                      */
-#define MAX_DOMAINS        2   /* Maximum # of domains allowed          */
-
-/* Flex domain indicates that the message was received in flex domain when
-   domain index is 2 */
-#define FLEX_DOMAIN        2   
-      
-/* When the application layer communicates with the transport or session layer,
-   the domain index for the outgoing message can be either set by the application 
-   layer or computed by the transport or session layer based on the destination 
-   address.  This value is used only in the TSASenParam structure.      */
-#define COMPUTE_DOMAIN_INDEX 3 
-
-#define MAX_GROUP_NUMBER 63    /* Maximum number of a node in a group   */
-
-/* Maximum number of array network variables allowed in
-    the application program. This constant is used to allocate
-    space that keeps track of all arrays and their dimension */
-#define MAX_NV_ARRAYS 10
-
-/* Maximum number of network output variables that can
-    be scheduled to be sent out at any point in time */
-#define MAX_NV_OUT     5
-
-/* To implement synchronous variables, the values of the
-    variables are to be stored along with index in the queue.
-    Define the maximum size (in bytes) of a network variable
-    in the application program. This is used for storage allocation. */
-#define MAX_NV_LENGTH 228
-
-/* Maximum number of network input variables that can
-    be scheduled to be polled at any point in time */
-#define MAX_NV_IN     50
-
-/* Maximum number of bytes in data array for msg_in, msg_out, resp_in etc.
-    This value is indepedent of application buffer sizes mentioned
-    earlier. Clearly it does not make sense for this value to be
-    larger than application buffer size (out or in). */
-#define MAX_DATA_SIZE 255
-
-// Maximum size of message on the wire (might be over sized a byte or two for safety)
-#ifndef MAX_PDU_SIZE
-#define MAX_PDU_SIZE (MAX_DATA_SIZE+21)
-#endif
-
-// Maximum LON MAC layer message size (bytes) for non-expanded non-extended
-// and extended messages,and expanded non-extended and extended messages with
-// framesync byte-stuffing; the LON MAC layer can carry ISO/IEC 14908-1
-// payloads up to 228 bytes, or UDP payloads up to 1280 bytes
-#define MAX_LON_MSG_NON_EX_LEN		240
-#define MAX_EXP_LON_MSG_NON_EX_LEN	(2*MAX_LON_MSG_NON_EX_LEN+4)
-#define MAX_LON_MSG_EX_LEN			1280
-#define MAX_EXP_LON_MSG_EX_LEN		(2*MAX_LON_MSG_EX_LEN+4)
-
-#define NUM_ADDR_TBL_ENTRIES   254     /* # of address table entries; maximum supported value is 255 */
-
-#define RECEIVE_TRANS_COUNT    16      /* Can be > 16 for Ref. Impl */
-
-#define NV_TABLE_SIZE          254     /* Check management tool for any restriction on maximum size */
-
-#define NV_ALIAS_TABLE_SIZE    254     /* Check management tool for any restriction on maximum size */
+// (Constants already defined before IzotPlatform.h include above)
 
 /*******************************************************************************
     For some targets, OsalAllocateMemory() uses an array to allocate storage
@@ -594,9 +609,7 @@ typedef IZOT_ENUM_BEGIN(IzotServiceLedPhysicalState) {
 #endif
 
 // LON/IP constants
-#define BROADCAST_PREFIX       0xEFC00000
-#define IP_ADDRESS_LEN         4
-#define IBOL_FINISH            0xFF
+// (Already defined before IzotPlatform.h include above)
 
 /*****************************************************************
  * Section: Addressing Type Globals
@@ -1375,6 +1388,28 @@ typedef IZOT_STRUCT_BEGIN(IzotDatapointDefinition) {
     const uint8_t   *ibol;          /* Points to the IBOL sequence */
     uint16_t        NvIndex;        /* NV index -- added for version 2 */
 } IZOT_STRUCT_END(IzotDatapointDefinition);
+
+/*
+ * Backward compatibility for legacy ShortStack-style NV tables.
+ */
+typedef IZOT_STRUCT_BEGIN(LonNvDescription) {
+    volatile void const *pData;
+    IzotByte             DeclaredSize;
+    uint32_t             Attributes;
+} IZOT_STRUCT_END(LonNvDescription);
+
+#ifndef LON_NVDESC_OUTPUT_MASK
+#define LON_NVDESC_OUTPUT_MASK      IZOT_DATAPOINT_IS_OUTPUT
+#endif
+#ifndef LON_NVDESC_SYNC_MASK
+#define LON_NVDESC_SYNC_MASK        IZOT_DATAPOINT_SYNC
+#endif
+#ifndef LON_NVDESC_CHANGEABLE_MASK
+#define LON_NVDESC_CHANGEABLE_MASK  IZOT_DATAPOINT_CHANGEABLE
+#endif
+#ifndef LON_NVDESC_PERSISTENT_MASK
+#define LON_NVDESC_PERSISTENT_MASK  (IZOT_DATAPOINT_PERSISTENT | IZOT_DATAPOINT_CONFIG_CLASS)
+#endif
 
 /*
  *  LON device configuration data structure
@@ -3293,4 +3328,7 @@ typedef struct {
 	uint32_t start;			    // Time stopwatch started
 } LonWatch;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _LON_TYPES_H */

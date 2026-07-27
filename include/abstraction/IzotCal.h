@@ -13,6 +13,7 @@
  */
 
 #include "izot/IzotPlatform.h"
+#include "izot/lon_types.h"
 
 #if !defined(DEFINED_IZOTCAL_H)
 #define DEFINED_IZOTCAL_H

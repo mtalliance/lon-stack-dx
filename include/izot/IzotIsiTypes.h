@@ -13,6 +13,7 @@
 #define  _ISI_TYPES_H
 
 #include "izot/IzotPlatform.h"
+#include "izot/lon_types.h"
 
 // ISI messages codes (see isi_msg.h)
 typedef IZOT_ENUM_BEGIN(IsiMessageCode) {
