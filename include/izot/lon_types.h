@@ -1392,11 +1392,6 @@ typedef IZOT_STRUCT_BEGIN(IzotDatapointDefinition) {
 /*
  * Backward compatibility for legacy ShortStack-style NV tables.
  */
-typedef IZOT_STRUCT_BEGIN(LonNvDescription) {
-    volatile void const *pData;
-    IzotByte             DeclaredSize;
-    uint32_t             Attributes;
-} IZOT_STRUCT_END(LonNvDescription);
 
 #ifndef LON_NVDESC_OUTPUT_MASK
 #define LON_NVDESC_OUTPUT_MASK      IZOT_DATAPOINT_IS_OUTPUT
